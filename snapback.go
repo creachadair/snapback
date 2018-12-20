@@ -15,6 +15,13 @@ import (
 
 // TODO: Pull out the config.
 
+// TODO: Prune old backups by age.
+// - Keep everything from the last day.
+// - Keep 1/day for up to 30 days.
+// - Keep 1/week for up to 3 months.
+// - Keep 1/month for up to 12 months.
+// - Keep 1/year after that.
+
 var config = map[string]tarsnap.CreateOptions{
 	"documents": {Include: []string{"Documents", "Desktop", "Downloads"}},
 	"blobdata":  {Include: []string{"data"}},
