@@ -7,7 +7,6 @@ import (
 	"log"
 	"os"
 	"path/filepath"
-	"text/tabwriter"
 	"time"
 
 	"bitbucket.org/creachadair/shell"
@@ -73,11 +72,9 @@ func main() {
 		if err != nil {
 			log.Fatalf("Listing archives: %v", err)
 		}
-		tw := tabwriter.NewWriter(os.Stdout, 16, 4, 2, ' ', 0)
 		for _, arch := range as {
-			fmt.Fprintf(tw, "%s\t%s\n", arch.Created.Format(time.RFC3339), arch.Name)
+			fmt.Printf("%s\t%s\n", arch.Created.Format(time.RFC3339), arch.Name)
 		}
-		tw.Flush()
 		return
 	}
 	if err := createBackups(cfg, config); err != nil {
