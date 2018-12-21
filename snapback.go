@@ -84,9 +84,11 @@ func main() {
 		}
 		return
 	}
+	start := time.Now()
 	if err := createBackups(cfg, config); err != nil {
 		log.Fatalf("Failed: %v", err)
 	}
+	log.Printf("Backups finished [%v elapsed]", time.Since(start).Round(time.Second))
 }
 
 func createBackups(cfg *tarsnap.Config, config map[string]tarsnap.CreateOptions) error {
