@@ -96,6 +96,8 @@ func main() {
 				size.UniqueBytes, size.CompressedUniqueBytes)
 		}
 		return
+	} else if flag.NArg() != 0 {
+		log.Fatalf("Extra arguments after command: %v", flag.Args())
 	}
 
 	start := time.Now()
