@@ -51,7 +51,6 @@ func main() {
 		log.Fatalf("Loading configuration: %v", err)
 	}
 	ts := &cfg.Config
-	ts.WorkDir = os.ExpandEnv(ts.WorkDir)
 	ts.CmdLog = logCommand
 	if ts.WorkDir == "" {
 		ts.WorkDir = dir
