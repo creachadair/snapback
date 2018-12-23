@@ -26,7 +26,10 @@ var config = map[string]tarsnap.CreateOptions{
 	"documents": {Include: []string{"Documents", "Desktop", "Downloads"}},
 	"blobdata":  {Include: []string{"data"}},
 	"pictures":  {Include: []string{"Pictures"}},
-	"software":  {Include: []string{"software"}},
+	"software": {
+		Include: []string{"software"},
+		Exclude: []string{"software/kythe/**", "software/sourced/**"},
+	},
 	"dotfiles": {
 		Include: []string{".dotfiles"},
 		Modify:  []string{`/^\.//`},
@@ -40,6 +43,7 @@ var config = map[string]tarsnap.CreateOptions{
 			"Library/Mail",
 			"Library/Preferences",
 		},
+		Exclude: []string{"Library/Application Support/Steam/**"},
 	},
 }
 
