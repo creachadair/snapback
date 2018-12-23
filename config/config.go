@@ -13,10 +13,8 @@ type Config struct {
 	// An ordered list of backups to be created.
 	Backup []Backup
 
-	// Working directory from which backups should be run.  This can be
-	// overridden by individual backups. If this is not specified, the directory
-	// containing the configuration file is used.
-	WorkDir string
+	// Configuration settings for the tarsnap tool.
+	tarsnap.Config `yaml:",inline"`
 }
 
 // TODO: Add pruning policy.
