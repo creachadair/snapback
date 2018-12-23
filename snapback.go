@@ -85,7 +85,9 @@ func main() {
 			log.Fatalf("Listing archives: %v", err)
 		}
 		for _, arch := range as {
-			fmt.Printf("%s\t%s\n", arch.Created.Format(time.RFC3339), arch.Name)
+			if matchExpr(arch.Name, flag.Args()) {
+				fmt.Printf("%s\t%s\n", arch.Created.Format(time.RFC3339), arch.Name)
+			}
 		}
 		return
 	} else if *doSize {
@@ -129,4 +131,14 @@ func createBackups(cfg *tarsnap.Config, config map[string]tarsnap.CreateOptions)
 		return fmt.Errorf("%d errors", nerrs)
 	}
 	return nil
+}
+
+func matchExpr(name string, exprs []string) bool {
+	for _, expr := range exprs {
+		ok, err := filepath.Match(expr, name)
+		if ok && err == nil {
+			return true
+		}
+	}
+	return len(exprs) == 0
 }
