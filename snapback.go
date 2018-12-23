@@ -60,6 +60,7 @@ Options:
 var (
 	workDir   = flag.String("dir", os.Getenv("HOME"), "Run from this directory")
 	doList    = flag.Bool("list", false, "List known archives")
+	doSize    = flag.Bool("size", false, "Print size statistics")
 	doDryRun  = flag.Bool("dry-run", false, "Simulate creating archives")
 	doVerbose = flag.Bool("v", false, "Verbose logging")
 )
@@ -83,7 +84,20 @@ func main() {
 			fmt.Printf("%s\t%s\n", arch.Created.Format(time.RFC3339), arch.Name)
 		}
 		return
+	} else if *doSize {
+		info, err := cfg.Stats(flag.Args()...)
+		if err != nil {
+			log.Fatalf("Reading stats: %v", err)
+		}
+		fmt.Printf("TOTAL\t%d\t%d\t%d\t%d\n", info.All.InputBytes, info.All.CompressedBytes,
+			info.All.UniqueBytes, info.All.CompressedUniqueBytes)
+		for arch, size := range info.Archive {
+			fmt.Printf("%s\t%d\t%d\t%d\t%d\n", arch, size.InputBytes, size.CompressedBytes,
+				size.UniqueBytes, size.CompressedUniqueBytes)
+		}
+		return
 	}
+
 	start := time.Now()
 	if err := createBackups(cfg, config); err != nil {
 		log.Fatalf("Failed: %v", err)
