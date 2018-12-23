@@ -89,7 +89,7 @@ func main() {
 		}
 		return
 	} else if *doSize {
-		info, err := cfg.Stats(flag.Args()...)
+		info, err := cfg.Size(flag.Args()...)
 		if err != nil {
 			log.Fatalf("Reading stats: %v", err)
 		}
