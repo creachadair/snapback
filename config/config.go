@@ -11,12 +11,12 @@ import (
 // A Config contains settings for the snapback tool.
 type Config struct {
 	// An ordered list of backups to be created.
-	Backup []Backup `yaml:"backup"`
+	Backup []Backup
 
 	// Working directory from which backups should be run.  This can be
 	// overridden by individual backups. If this is not specified, the directory
 	// containing the configuration file is used.
-	WorkDir string `yaml:"workdir"`
+	WorkDir string
 }
 
 // TODO: Add pruning policy.
@@ -25,7 +25,7 @@ type Config struct {
 type Backup struct {
 	// The name defines the base name of the archive. A timestamp will be
 	// appended to this name to obtain the complete name.
-Name string `yaml:"name"`
+	Name string
 
 	// The archive creation options for this backup.
 	tarsnap.CreateOptions `yaml:",inline"`
