@@ -50,12 +50,11 @@ func main() {
 	if err != nil {
 		log.Fatalf("Loading configuration: %v", err)
 	}
-	ts := &tarsnap.Config{
-		Dir:    os.ExpandEnv(cfg.WorkDir),
-		CmdLog: logCommand,
-	}
-	if ts.Dir == "" {
-		ts.Dir = dir
+	ts := &cfg.Config
+	ts.WorkDir = os.ExpandEnv(ts.WorkDir)
+	ts.CmdLog = logCommand
+	if ts.WorkDir == "" {
+		ts.WorkDir = dir
 	}
 
 	if *doList {
