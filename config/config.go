@@ -3,6 +3,7 @@ package config
 
 import (
 	"io"
+	"os"
 
 	"bitbucket.org/creachadair/tarsnap"
 	yaml "gopkg.in/yaml.v2"
@@ -11,7 +12,7 @@ import (
 // A Config contains settings for the snapback tool.
 type Config struct {
 	// An ordered list of backups to be created.
-	Backup []Backup
+	Backup []*Backup
 
 	// Configuration settings for the tarsnap tool.
 	tarsnap.Config `yaml:",inline"`
@@ -37,5 +38,12 @@ func Parse(r io.Reader) (*Config, error) {
 	if err := dec.Decode(&cfg); err != nil {
 		return nil, err
 	}
+	expand(&cfg.Keyfile)
+	expand(&cfg.WorkDir)
+	for _, b := range cfg.Backup {
+		expand(&b.WorkDir)
+	}
 	return &cfg, nil
 }
+
+func expand(s *string) { *s = os.ExpandEnv(*s) }
