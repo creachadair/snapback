@@ -80,7 +80,7 @@ func listArchives(ts *tarsnap.Config) {
 	}
 	for _, arch := range as {
 		if matchExpr(arch.Name, flag.Args()) {
-			fmt.Printf("%s\t%s\n", arch.Created.Format(time.RFC3339), arch.Name)
+			fmt.Printf("%s\t%s\n", arch.Created.In(time.Local).Format(time.RFC3339), arch.Name)
 		}
 	}
 }
