@@ -7,6 +7,7 @@ import (
 	"log"
 	"os"
 	"path/filepath"
+	"text/tabwriter"
 	"time"
 
 	"bitbucket.org/creachadair/shell"
@@ -90,12 +91,14 @@ func printSizes(ts *tarsnap.Config) {
 	if err != nil {
 		log.Fatalf("Reading stats: %v", err)
 	}
-	fmt.Printf("TOTAL\t%d\t%d\t%d\t%d\n", info.All.InputBytes, info.All.CompressedBytes,
+	tw := tabwriter.NewWriter(os.Stdout, 0, 8, 1, ' ', 0)
+	fmt.Fprintf(tw, "TOTAL\t%d\t%d\t%d\t%d\n", info.All.InputBytes, info.All.CompressedBytes,
 		info.All.UniqueBytes, info.All.CompressedUniqueBytes)
 	for arch, size := range info.Archive {
-		fmt.Printf("%s\t%d\t%d\t%d\t%d\n", arch, size.InputBytes, size.CompressedBytes,
+		fmt.Fprintf(tw, "%s\t%d\t%d\t%d\t%d\n", arch, size.InputBytes, size.CompressedBytes,
 			size.UniqueBytes, size.CompressedUniqueBytes)
 	}
+	tw.Flush()
 }
 
 func createBackups(ts *tarsnap.Config, cfg *config.Config) error {
