@@ -7,6 +7,7 @@ import (
 	"log"
 	"os"
 	"path/filepath"
+	"strconv"
 	"text/tabwriter"
 	"time"
 
@@ -92,11 +93,11 @@ func printSizes(ts *tarsnap.Config) {
 		log.Fatalf("Reading stats: %v", err)
 	}
 	tw := tabwriter.NewWriter(os.Stdout, 0, 8, 1, ' ', 0)
-	fmt.Fprintf(tw, "TOTAL\t%d\t%d\t%d\t%d\n", info.All.InputBytes, info.All.CompressedBytes,
-		info.All.UniqueBytes, info.All.CompressedUniqueBytes)
+	fmt.Fprintf(tw, "TOTAL\t%s\t%s\t%s\t%s\n", H(info.All.InputBytes), H(info.All.CompressedBytes),
+		H(info.All.UniqueBytes), H(info.All.CompressedUniqueBytes))
 	for arch, size := range info.Archive {
-		fmt.Fprintf(tw, "%s\t%d\t%d\t%d\t%d\n", arch, size.InputBytes, size.CompressedBytes,
-			size.UniqueBytes, size.CompressedUniqueBytes)
+		fmt.Fprintf(tw, "%s\t%s\t%s\t%s\t%s\n", arch, H(size.InputBytes), H(size.CompressedBytes),
+			H(size.UniqueBytes), H(size.CompressedUniqueBytes))
 	}
 	tw.Flush()
 }
@@ -146,5 +147,20 @@ func loadConfig(path string) (string, *config.Config, error) {
 func logCommand(cmd string, args []string) {
 	if *doVerbose {
 		fmt.Fprintf(os.Stderr, "+ [%s] %s\n", cmd, shell.Join(args))
+	}
+}
+
+func H(z int64) string {
+	switch {
+	case z < 1<<10:
+		return strconv.FormatInt(z, 10)
+	case z <= 1<<20:
+		return fmt.Sprintf("%.1fK", float64(z)/(1<<10))
+	case z <= 1<<30:
+		return fmt.Sprintf("%.1fM", float64(z)/(1<<20))
+	case z <= 1<<40:
+		return fmt.Sprintf("%.1fG", float64(z)/(1<<30))
+	default:
+		return fmt.Sprintf("%.1fT", float64(z)/(1<<40))
 	}
 }
