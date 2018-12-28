@@ -5,6 +5,7 @@ backups on the [tarsnap][ts] service. Under the covers, it calls out to the
 `tarsnap` command-line tool to create, list, and delete backups, and can read
 settings from a configuration file.
 
+
 ## Installation
 
 To use `snapback`, you will need [tarsnap][tsdl] and [Go][godl].  Once you have
@@ -21,6 +22,7 @@ to verify that things are working by running:
 $ snapback -help
 ```
 
+
 ## Configuration
 
 The default configuration file is `$HOME/.snapback`, or you can use the
@@ -28,15 +30,20 @@ The default configuration file is `$HOME/.snapback`, or you can use the
 The following example illustrates the available settings:
 
 ```yaml
-# snapback configuration file
+# Example snapback configuration file.
+# This example shows all the available settings, but in most cases the defaults
+# should suffice apart from specifying backups (see below).
 
-# Settings for tarsnap. The defaults should usually suffice.
+# Settings for tarsnap. You won't usually need to change these from the default
+# unless you are using different settings for snapback runs.
 tool: "path to tarsnap"      # default: uses $PATH
 keyFile: "path to key file"  # default: uses tarsnap settings
-workDir: "directory path"    # default: $HOME
 
-# Default expiration settings. These settings govern how old backups
-# are cleaned up by snapback -prune.
+# Where backups should be started from by default. The default is $HOME.
+workDir: "directory path"
+
+# Default expiration settings. These settings govern how old backups are
+# cleaned up by snapback -prune.
 expiration:
 - latest: 3       # keep the latest three archives of every set
 
@@ -49,9 +56,9 @@ expiration:
 - after: 6 months # after six months, keep one archive per month.
   sample: 1/month
 
-# Backups. Each backup defines a collection of related backups, identified
-# by a base name. Tarsnap requires unique names, so snapback appends a
-# timestamp like ".20190315-1845" to generate an archive name. You may have
+# Backups. Each backup in this list defines a collection of related backups,
+# identified by a base name. Tarsnap requires unique names, so snapback appends
+# a timestamp like ".20190315-1845" to generate an archive name. You may have
 # as many backups as you like, but the names must not repeat.
 backup:
 - name: documents
@@ -74,6 +81,14 @@ backup:
   - latest: 10
   - after: 28 days
     sample: 1/week
+
+- name: pictures
+  include: [Pictures]
+  expiration:
+  - until: 10 days
+    latest: 1000     # one way to express "keep it all"
+  - after: 10 days
+	sample: 1/month
 ```
 
 [ts]: https://www.tarsnap.com/
