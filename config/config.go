@@ -217,32 +217,35 @@ const (
 	Year            = Interval(365.25 * float64(Day))
 )
 
-var dx = regexp.MustCompile(`^(?i)(\d+|\d*\.\d+)([shdwmy])$`)
+var dx = regexp.MustCompile(`^(\d+|\d*\.\d+)? ?(\w+)$`)
 
 func parseInterval(s string) (Interval, error) {
 	m := dx.FindStringSubmatch(s)
 	if m == nil {
 		return 0, fmt.Errorf("invalid interval %q", s)
 	}
+	if m[1] == "" {
+		m[1] = "1"
+	}
 	f, err := strconv.ParseFloat(m[1], 64)
 	if err != nil {
 		return 0, fmt.Errorf("invalid number: %v", err)
 	}
 	switch m[2] {
-	case "s", "S":
+	case "s", "sec", "secs":
 		f *= float64(Second)
-	case "h", "H":
+	case "h", "hr", "hrs":
 		f *= float64(Hour)
-	case "d", "D":
+	case "d", "day", "days":
 		f *= float64(Day)
-	case "w", "W":
+	case "w", "wk", "week", "weeks":
 		f *= float64(Week)
-	case "m", "M":
+	case "m", "mo", "mon", "month", "months":
 		f *= float64(Month)
-	case "y", "Y":
+	case "y", "yr", "year", "years":
 		f *= float64(Year)
 	default:
-		panic("unhandled key: " + m[2])
+		return 0, fmt.Errorf("unknown unit %q", m[2])
 	}
 	return Interval(f), nil
 }
