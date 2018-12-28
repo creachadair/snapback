@@ -132,9 +132,13 @@ func printSizes(cfg *config.Config, as []tarsnap.Archive) {
 	fmt.Fprintf(tw, "TOTAL\t%s raw\t%s comp\t%s uniq\t%s incr\n",
 		H(info.All.InputBytes), H(info.All.CompressedBytes),
 		H(info.All.UniqueBytes), H(info.All.CompressedUniqueBytes))
-	for arch, size := range info.Archive {
-		fmt.Fprintf(tw, "%s\t%s\t%s\t%s\t%s\n", arch, H(size.InputBytes), H(size.CompressedBytes),
-			H(size.UniqueBytes), H(size.CompressedUniqueBytes))
+	for _, arch := range as {
+		size, ok := info.Archive[arch.Name]
+		if ok {
+			fmt.Fprintf(tw, "%s\t%s\t%s\t%s\t%s\n", arch.Name,
+				H(size.InputBytes), H(size.CompressedBytes),
+				H(size.UniqueBytes), H(size.CompressedUniqueBytes))
+		}
 	}
 	tw.Flush()
 }
