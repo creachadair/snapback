@@ -1,22 +1,17 @@
 # snapback: A tarsnap backup tool
 
-`snapback` is a command-line wrapper tool that makes it easier to manage
-backups on the [tarsnap][ts] service. Under the covers, it calls out to the
-`tarsnap` command-line tool to create, list, and delete backups, and can read
-settings from a configuration file.
+`snapback` is a command-line wrapper tool that makes it easier to manage backups on the [tarsnap][ts] service. Under the covers, it calls out to the `tarsnap` command-line tool to create, list, and delete backups, and can read settings from a configuration file.
 
 
 ## Installation
 
-To use `snapback`, you will need [tarsnap][tsdl] and [Go][godl].  Once you have
-these installed, run:
+To use `snapback`, you will need [tarsnap][tsdl] and [Go][godl].  Once you have these installed, run:
 
 ```shell
 $ env GO111MODULE=off go get bitbucket.org/creachadair/snapback
 ```
 
-Provided you have `$GOPATH/bin` in your `$PATH` environment, you should be able
-to verify that things are working by running:
+Provided you have `$GOPATH/bin` in your `$PATH` environment, you should be able to verify that things are working by running:
 
 ```shell
 $ snapback -help
@@ -24,10 +19,7 @@ $ snapback -help
 
 ## Quick Reference
 
-For a summary of options, run `snapback -help`. For each of the commands shown
-here, you can also add `-dry-run` to prevent the tool from making any
-changes. The `tarsnap` tool has built-in support for `--dry-run` when creating
-new archives, and `snapback` adds support for a dry run on `-prune` as well.
+For a summary of options, run `snapback -help`. For each of the commands shown here, you can also add `-dry-run` to prevent the tool from making any changes. The `tarsnap` tool has built-in support for `--dry-run` when creating new archives, and `snapback` adds support for a dry run on `-prune` as well.
 
 -  Create backups: `snapback`
 
@@ -44,9 +36,7 @@ new archives, and `snapback` adds support for a dry run on `-prune` as well.
 
 ## Configuration
 
-The default configuration file is `$HOME/.snapback`, or you can use the
-`-config` flag to pick a different file. The file is in [YAML][yaml] format.
-The following example illustrates the available settings:
+The default configuration file is `$HOME/.snapback`, or you can use the `-config` flag to pick a different file. The file is in [YAML][yaml] format. The following example illustrates the available settings:
 
 ```yaml
 # Example snapback configuration file.
