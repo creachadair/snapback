@@ -108,7 +108,18 @@ func pruneArchives(cfg *config.Config, as []tarsnap.Archive) {
 }
 
 func printSizes(cfg *config.Config, as []tarsnap.Archive) {
-	info, err := cfg.Config.Size(flag.Args()...)
+	var names []string
+	if as == nil {
+		names = flag.Args()
+	} else {
+		for _, a := range as {
+			if matchExpr(a.Name, flag.Args()) {
+				names = append(names, a.Name)
+			}
+		}
+	}
+
+	info, err := cfg.Config.Size(names...)
 	if err != nil {
 		log.Fatalf("Reading stats: %v", err)
 	}
