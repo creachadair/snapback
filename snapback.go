@@ -107,7 +107,8 @@ func printSizes(ts *tarsnap.Config) {
 		log.Fatalf("Reading stats: %v", err)
 	}
 	tw := tabwriter.NewWriter(os.Stdout, 0, 8, 1, ' ', 0)
-	fmt.Fprintf(tw, "TOTAL\t%s\t%s\t%s\t%s\n", H(info.All.InputBytes), H(info.All.CompressedBytes),
+	fmt.Fprintf(tw, "TOTAL\t%s raw\t%s cmp\t%s dedup\t%s dcmp\n",
+		H(info.All.InputBytes), H(info.All.CompressedBytes),
 		H(info.All.UniqueBytes), H(info.All.CompressedUniqueBytes))
 	for arch, size := range info.Archive {
 		fmt.Fprintf(tw, "%s\t%s\t%s\t%s\t%s\n", arch, H(size.InputBytes), H(size.CompressedBytes),
