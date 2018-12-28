@@ -2,6 +2,7 @@
 package config
 
 import (
+	"errors"
 	"fmt"
 	"io"
 	"os"
@@ -18,7 +19,8 @@ import (
 
 var timeZero = time.Date(1970, 1, 1, 0, 0, 0, 0, time.UTC)
 
-// A Config contains settings for the snapback tool.
+// A Config contains settings for the snapback tool. This is the top-level
+// message used to parse the config file contents as YAML.
 type Config struct {
 	// An ordered list of backups to be created.
 	Backup []*Backup
@@ -30,10 +32,13 @@ type Config struct {
 	tarsnap.Config `yaml:",inline"`
 }
 
-// FindExpired returns a slice of archives that exist but are are eligible for
+// FindExpired returns a slice of the archives in arch that are eligible for
 // removal under the expiration policies in effect for c.
 func (c *Config) FindExpired(arch []tarsnap.Archive) []tarsnap.Archive {
 	now := time.Now()
+
+	// Partition the archives according to which backup owns them, to simplify
+	// figuring out which rules apply to each batch.
 	sets := make(map[string][]tarsnap.Archive)
 	for _, a := range arch {
 		ext := filepath.Ext(a.Name)
@@ -56,7 +61,7 @@ func (c *Config) FindExpired(arch []tarsnap.Archive) []tarsnap.Archive {
 			continue // nothing to do
 		}
 
-		// Now find all the archives belonging this backup which are affected by
+		// Now, find all the archives belonging this backup which are affected by
 		// some rule, and record which if any rule applies. If no rule applies,
 		// the archive is kept unconditionally. The slice for each rule is in
 		// order by creation date (oldest to newest).
@@ -71,7 +76,7 @@ func (c *Config) FindExpired(arch []tarsnap.Archive) []tarsnap.Archive {
 			}
 		}
 
-		// Now apply the policy...
+		// Finally, apply the policy...
 		for rule, batch := range rules {
 			match = append(match, rule.apply(batch)...)
 		}
@@ -80,20 +85,36 @@ func (c *Config) FindExpired(arch []tarsnap.Archive) []tarsnap.Archive {
 }
 
 // A Policy specifies a policy for which backups to keep. When given a set of
-// policies, the policy that best applies to an archive is the earliest,
+// policies, the policy that "best" applies to an archive is the earliest,
 // narrowest span of time between min and max before present, inclusive, that
-// includes the creation time of the archive. A max value of 0 means +∞.
+// includes the creation time of the archive.
 //
 // For example suppose X is an archive created 7 days before present, and we
-// have policies (min=0, max=0)
+// have these policies:
+//
+//    P(min=1d, max=10d)
+//    Q(min=4d, max=8d)
+//    R(min=3d, max=6d)
+//
+// Archive X will be governed by policy Q. R is ineligible because it does not
+// span the creation time of X, and Q is preferable to P because Q is only 3
+// days wide whereas P is 9 days wide.
+//
+// A policy with a max value of 0 is assumed to end at time +∞.
 type Policy struct {
 	// The rest of this policy applies to backups created in the inclusive
 	// interval between min and max before present. Max == 0 means +∞.
 	Min Interval `yaml:"after"`
 	Max Interval `yaml:"until"`
 
-	Latest int       // keep this many of the most-recent matching archives
-	Sample *Sampling // if set, samples/period to retain
+	// If positive, keep up to this many of most-recent matching archives.
+	Latest int
+
+	// If set, retain the specified number of samples per period within this
+	// range. Sample ranges are based on the Unix epoch so that they do not move
+	// over time, and the latest-created archive in each window is selected as
+	// the candidate for that window.
+	Sample *Sampling
 }
 
 // apply returns all the input archives that are expired by p.
@@ -110,8 +131,10 @@ func (p *Policy) apply(batch []tarsnap.Archive) []tarsnap.Archive {
 	// The width of the scaled sampling interval, where s/p = 1/ival.
 	ival := p.Sample.Period / Interval(p.Sample.N)
 
-	// Find smallest interval beginning at or before the last entry in the
+	// Find the smallest interval beginning at or before the last entry in the
 	// policy window. We keep the last (most recent) entry in each interval.
+	// Note that we work backward because the archives are ordered by creation
+	// timestamp in ascending order (smaller timestamps are older).
 	last := durationInterval(batch[len(batch)-1].Created.Sub(timeZero))
 	base := ival * (last / ival)
 
@@ -121,6 +144,7 @@ func (p *Policy) apply(batch []tarsnap.Archive) []tarsnap.Archive {
 		if age >= base {
 			drop = append(drop, batch[i])
 		} else {
+			// We crossed into the next bucket -- keep this representative.
 			base -= ival
 		}
 	}
@@ -150,7 +174,9 @@ func Parse(r io.Reader) (*Config, error) {
 	}
 	seen := make(map[string]bool)
 	for _, b := range cfg.Backup {
-		if seen[b.Name] {
+		if b.Name == "" {
+			return nil, errors.New("empty backup name")
+		} else if seen[b.Name] {
 			return nil, fmt.Errorf("repeated backup name %q", b.Name)
 		}
 		seen[b.Name] = true
@@ -181,7 +207,18 @@ func sortExp(es []*Policy) {
 	})
 }
 
-// An Interval represents a time interval in seconds.
+// An Interval represents a time interval in seconds. An Interval can be parsed
+// from a string in the format "d.dd unit" or "d unit", where unit is one of
+//
+//   s, sec, secs         -- seconds
+//   h, hr, hour, hours   -- hours
+//   d, day, days         -- days (defined as 24 hours)
+//   w, wk, week, weeks   -- weeks (defined as 7 days)
+//   m, mo, month, months -- months (defined as 365.25/12=30.4375 days)
+//   y, yr, year, years   -- years (defined as 365.25 days)
+//
+// The space between the number and the unit is optional. Fractional values are
+// permitted, and results are rounded toward zero.
 type Interval int64
 
 func (iv Interval) timeDuration() time.Duration {
