@@ -70,9 +70,9 @@ func main() {
 			prune = append(prune, p.Name)
 		}
 		if len(prune) == 0 {
-			log.Fatal("Nothing to prune")
+			fmt.Fprintln(os.Stderr, "Nothing to prune")
 		} else if *doDryRun {
-			fmt.Fprintln(os.Stderr, "Pruning will remove these archives:")
+			fmt.Fprintln(os.Stderr, "-- Pruning would remove these archives:")
 			fmt.Println(strings.Join(prune, "\n"))
 		} else if err := ts.Delete(prune...); err != nil {
 			log.Fatalf("Deleting archives: %v", err)
