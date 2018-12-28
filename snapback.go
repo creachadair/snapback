@@ -20,10 +20,15 @@ import (
 func init() {
 	flag.Usage = func() {
 		fmt.Fprintf(os.Stderr, `Usage: %[1]s [-v] -list  # list existing backups
+       %[1]s [-v] -prune # clean up old backups
+       %[1]s [-v] -size  # show sizes of stored data
        %[1]s [-v]        # create new backups
 
 Create tarsnap backups of important directories. With the -v flag, the
 underlying tarsnap commands will be logged to stderr.
+
+With -list and -size, the non-flag arguments are used to select which archives
+to list or evaluate. Globs are permitted in these arguments.
 
 Options:
 `, filepath.Base(os.Args[0]))
