@@ -8,6 +8,7 @@ import (
 	"os"
 	"path/filepath"
 	"strconv"
+	"strings"
 	"text/tabwriter"
 	"time"
 
@@ -15,13 +16,6 @@ import (
 	"bitbucket.org/creachadair/snapback/config"
 	"bitbucket.org/creachadair/tarsnap"
 )
-
-// TODO: Prune old backups by age.
-// - Keep everything from the last day.
-// - Keep 1/day for up to 30 days.
-// - Keep 1/week for up to 3 months.
-// - Keep 1/month for up to 12 months.
-// - Keep 1/year after that.
 
 func init() {
 	flag.Usage = func() {
@@ -40,6 +34,7 @@ Options:
 var (
 	configFile = flag.String("config", "$HOME/.snapback", "Configuration file")
 	doList     = flag.Bool("list", false, "List known archives")
+	doPrune    = flag.Bool("prune", false, "Prune out-of-band archives")
 	doSize     = flag.Bool("size", false, "Print size statistics")
 	doDryRun   = flag.Bool("dry-run", false, "Simulate creating archives")
 	doVerbose  = flag.Bool("v", false, "Verbose logging")
@@ -58,10 +53,33 @@ func main() {
 		ts.WorkDir = dir
 	}
 
-	if *doList {
-		listArchives(ts)
+	if *doList || *doPrune {
+		if *doList && *doPrune {
+			log.Fatal("The -list and -prune options are mutually exclusive")
+		}
+		arch, err := ts.Archives()
+		if err != nil {
+			log.Fatalf("Listing archives: %v", err)
+		}
+		if *doList {
+			listArchives(arch)
+			return
+		}
+		var prune []string
+		for _, p := range cfg.FindExpired(arch) {
+			prune = append(prune, p.Name)
+		}
+		if len(prune) == 0 {
+			log.Fatal("Nothing to prune")
+		} else if *doDryRun {
+			fmt.Fprintln(os.Stderr, "Pruning will remove these archives:")
+			fmt.Println(strings.Join(prune, "\n"))
+		} else if err := ts.Delete(prune...); err != nil {
+			log.Fatalf("Deleting archives: %v", err)
+		}
 		return
-	} else if *doSize {
+	}
+	if *doSize {
 		printSizes(ts)
 		return
 	} else if flag.NArg() != 0 {
@@ -75,11 +93,7 @@ func main() {
 	log.Printf("Backups finished [%v elapsed]", time.Since(start).Round(time.Second))
 }
 
-func listArchives(ts *tarsnap.Config) {
-	as, err := ts.Archives()
-	if err != nil {
-		log.Fatalf("Listing archives: %v", err)
-	}
+func listArchives(as []tarsnap.Archive) {
 	for _, arch := range as {
 		if matchExpr(arch.Name, flag.Args()) {
 			fmt.Printf("%s\t%s\n", arch.Created.In(time.Local).Format(time.RFC3339), arch.Name)
@@ -150,6 +164,7 @@ func logCommand(cmd string, args []string) {
 	}
 }
 
+// H converts z into a human-readable string.
 func H(z int64) string {
 	switch {
 	case z < 1<<10:
