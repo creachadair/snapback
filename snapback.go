@@ -53,47 +53,38 @@ func main() {
 		ts.WorkDir = dir
 	}
 
-	if *doList || *doPrune {
-		if *doList && *doPrune {
-			log.Fatal("The -list and -prune options are mutually exclusive")
-		}
-		arch, err := ts.Archives()
+	// If we need a list of existing archives, grab it.
+	var arch []tarsnap.Archive
+	if *doList || *doPrune || (*doSize && hasGlob(flag.Args())) {
+		arch, err = ts.Archives()
 		if err != nil {
 			log.Fatalf("Listing archives: %v", err)
 		}
-		if *doList {
-			listArchives(arch)
-			return
-		}
-		var prune []string
-		for _, p := range cfg.FindExpired(arch) {
-			prune = append(prune, p.Name)
-		}
-		if len(prune) == 0 {
-			fmt.Fprintln(os.Stderr, "Nothing to prune")
-		} else if *doDryRun {
-			fmt.Fprintln(os.Stderr, "-- Pruning would remove these archives:")
-			fmt.Println(strings.Join(prune, "\n"))
-		} else if err := ts.Delete(prune...); err != nil {
-			log.Fatalf("Deleting archives: %v", err)
-		}
+	}
+	if *doList {
+		listArchives(cfg, arch)
 		return
 	}
+	if *doPrune {
+		pruneArchives(cfg, arch)
+		return
+	}
+
 	if *doSize {
-		printSizes(ts)
+		printSizes(cfg, arch)
 		return
 	} else if flag.NArg() != 0 {
 		log.Fatalf("Extra arguments after command: %v", flag.Args())
 	}
 
 	start := time.Now()
-	if err := createBackups(ts, cfg); err != nil {
+	if err := createBackups(cfg); err != nil {
 		log.Fatalf("Failed: %v", err)
 	}
 	log.Printf("Backups finished [%v elapsed]", time.Since(start).Round(time.Second))
 }
 
-func listArchives(as []tarsnap.Archive) {
+func listArchives(_ *config.Config, as []tarsnap.Archive) {
 	for _, arch := range as {
 		if matchExpr(arch.Name, flag.Args()) {
 			fmt.Printf("%s\t%s\n", arch.Created.In(time.Local).Format(time.RFC3339), arch.Name)
@@ -101,8 +92,23 @@ func listArchives(as []tarsnap.Archive) {
 	}
 }
 
-func printSizes(ts *tarsnap.Config) {
-	info, err := ts.Size(flag.Args()...)
+func pruneArchives(cfg *config.Config, as []tarsnap.Archive) {
+	var prune []string
+	for _, p := range cfg.FindExpired(as) {
+		prune = append(prune, p.Name)
+	}
+	if len(prune) == 0 {
+		fmt.Fprintln(os.Stderr, "Nothing to prune")
+	} else if *doDryRun {
+		fmt.Fprintln(os.Stderr, "-- Pruning would remove these archives:")
+		fmt.Println(strings.Join(prune, "\n"))
+	} else if err := cfg.Config.Delete(prune...); err != nil {
+		log.Fatalf("Deleting archives: %v", err)
+	}
+}
+
+func printSizes(cfg *config.Config, as []tarsnap.Archive) {
+	info, err := cfg.Config.Size(flag.Args()...)
 	if err != nil {
 		log.Fatalf("Reading stats: %v", err)
 	}
@@ -117,14 +123,14 @@ func printSizes(ts *tarsnap.Config) {
 	tw.Flush()
 }
 
-func createBackups(ts *tarsnap.Config, cfg *config.Config) error {
+func createBackups(cfg *config.Config) error {
 	tag := "." + time.Now().Format("20060102-1504")
 	nerrs := 0
 	for _, b := range cfg.Backup {
 		opts := b.CreateOptions
 		opts.DryRun = *doDryRun
 		name := b.Name + tag
-		if err := ts.Create(name, opts); err != nil {
+		if err := cfg.Config.Create(name, opts); err != nil {
 			log.Printf("ERROR: %s: %v", name, err)
 			nerrs++
 		}
@@ -179,4 +185,29 @@ func H(z int64) string {
 	default:
 		return fmt.Sprintf("%.1fT", float64(z)/(1<<40))
 	}
+}
+
+func isGlob(s string) bool {
+	qt := false
+	for _, c := range s {
+		switch c {
+		case '\\':
+			qt = !qt
+		case '[', '*', '?':
+			if !qt {
+				return true
+			}
+			qt = false
+		}
+	}
+	return false
+}
+
+func hasGlob(args []string) bool {
+	for _, arg := range args {
+		if isGlob(arg) {
+			return true
+		}
+	}
+	return false
 }
