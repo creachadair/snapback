@@ -22,6 +22,24 @@ to verify that things are working by running:
 $ snapback -help
 ```
 
+## Quick Reference
+
+To each of the commands shown here, add `-dry-run` to prevent the tool from
+making any changes. The `tarsnap` tool understands `--dry-run` for creating new
+archives, and `snapback` includes support for a dry run on `-prune` as well.
+
+-  Create backups: `snapback`
+
+-  List the archives known to exist: `snapback -list`
+
+    * To list archives matching a pattern: `snapback -list basename.*`
+
+-  Show the size of all stored data: `snapback -size`
+
+	* Show the size of a specific archive: `snapback -size archivename`
+	* Show the sizes of matching archives: `snapback -size *.201812??-*`
+
+-  Prune old archives: `snapback -prune`
 
 ## Configuration
 
