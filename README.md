@@ -52,7 +52,8 @@ keyFile: "path to key file"  # default: uses tarsnap settings
 workDir: "directory path"
 
 # Default expiration settings. These settings govern how old backups are
-# cleaned up by snapback -prune.
+# cleaned up by snapback -prune, and are used for every backup that does
+# not provide its own expiration rules.
 expiration:
 - latest: 3       # keep the latest three archives of every set
 
