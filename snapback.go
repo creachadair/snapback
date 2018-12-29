@@ -99,7 +99,7 @@ func listArchives(_ *config.Config, as []tarsnap.Archive) {
 
 func pruneArchives(cfg *config.Config, as []tarsnap.Archive) {
 	var prune []string
-	for _, p := range cfg.FindExpired(as) {
+	for _, p := range cfg.FindExpired(as, time.Now()) {
 		prune = append(prune, p.Name)
 	}
 	if len(prune) == 0 {

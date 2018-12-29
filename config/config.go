@@ -32,10 +32,9 @@ type Config struct {
 }
 
 // FindExpired returns a slice of the archives in arch that are eligible for
-// removal under the expiration policies in effect for c.
-func (c *Config) FindExpired(arch []tarsnap.Archive) []tarsnap.Archive {
-	now := time.Now()
-
+// removal under the expiration policies in effect for c, given that now is the
+// moment denoting the present.
+func (c *Config) FindExpired(arch []tarsnap.Archive, now time.Time) []tarsnap.Archive {
 	// Partition the archives according to which backup owns them, to simplify
 	// figuring out which rules apply to each batch.
 	sets := make(map[string][]tarsnap.Archive)
