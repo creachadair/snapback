@@ -6,7 +6,6 @@ import (
 	"fmt"
 	"io"
 	"os"
-	"path/filepath"
 	"regexp"
 	"sort"
 	"strconv"
@@ -41,12 +40,10 @@ func (c *Config) FindExpired(arch []tarsnap.Archive) []tarsnap.Archive {
 	// figuring out which rules apply to each batch.
 	sets := make(map[string][]tarsnap.Archive)
 	for _, a := range arch {
-		ext := filepath.Ext(a.Name)
-		if _, err := time.Parse(".20060102-1504", ext); err != nil {
+		if _, err := time.Parse("20060102-1504", a.Tag); err != nil {
 			continue // not the correct format
 		}
-		tag := strings.TrimSuffix(a.Name, ext)
-		sets[tag] = append(sets[tag], a)
+		sets[a.Base] = append(sets[a.Base], a)
 	}
 
 	var match []tarsnap.Archive
