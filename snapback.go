@@ -10,6 +10,7 @@ import (
 	"strconv"
 	"strings"
 	"text/tabwriter"
+	"text/template"
 	"time"
 
 	"bitbucket.org/creachadair/shell"
@@ -39,6 +40,7 @@ Options:
 
 var (
 	configFile = flag.String("config", "$HOME/.snapback", "Configuration file")
+	outFormat  = flag.String("format", "", "Output format (Go template)")
 	doList     = flag.Bool("list", false, "List known archives")
 	doPrune    = flag.Bool("prune", false, "Prune out-of-band archives")
 	doSize     = flag.Bool("size", false, "Print size statistics")
@@ -94,9 +96,25 @@ func main() {
 }
 
 func listArchives(_ *config.Config, as []tarsnap.Archive) {
+	ft := *outFormat
+	if ft == "" {
+		ft = "{{.Created}}\t{{.Name}}\n"
+	} else if !strings.HasSuffix(ft, "\n") {
+		ft += "\n"
+	}
+	t, err := template.New("list").Parse(ft)
+	if err != nil {
+		log.Fatalf("Parsing output format: %v", err)
+	}
 	for _, arch := range as {
 		if matchExpr(arch.Name, flag.Args()) {
-			fmt.Printf("%s\t%s\n", arch.Created.In(time.Local).Format(time.RFC3339), arch.Name)
+			err := t.Execute(os.Stdout, struct {
+				Created string
+				tarsnap.Archive
+			}{Created: arch.Created.In(time.Local).Format(time.RFC3339), Archive: arch})
+			if err != nil {
+				log.Fatalf("Writing %v: %v", arch, err)
+			}
 		}
 	}
 }
