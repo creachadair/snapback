@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"log"
 	"os"
 	"regexp"
 	"sort"
@@ -27,6 +28,9 @@ type Config struct {
 	// Default expiration policies.
 	Expiration []*Policy
 
+	// Enable verbose logging.
+	Verbose bool
+
 	// Configuration settings for the tarsnap tool.
 	tarsnap.Config `yaml:",inline"`
 }
@@ -35,6 +39,8 @@ type Config struct {
 // removal under the expiration policies in effect for c, given that now is the
 // moment denoting the present.
 func (c *Config) FindExpired(arch []tarsnap.Archive, now time.Time) []tarsnap.Archive {
+	c.logf("Finding expired archives, %d inputs, current time %v", len(arch), now)
+
 	// Partition the archives according to which backup owns them, to simplify
 	// figuring out which rules apply to each batch.
 	sets := make(map[string][]tarsnap.Archive)
@@ -54,6 +60,7 @@ func (c *Config) FindExpired(arch []tarsnap.Archive, now time.Time) []tarsnap.Ar
 			exp = c.Expiration
 		}
 		if len(exp) == 0 {
+			c.logf("No expiration rules for %s [skipping]", b.Name)
 			continue // nothing to do
 		}
 
@@ -74,10 +81,17 @@ func (c *Config) FindExpired(arch []tarsnap.Archive, now time.Time) []tarsnap.Ar
 
 		// Finally, apply the policy...
 		for rule, batch := range rules {
-			match = append(match, rule.apply(batch)...)
+			c.logf("Applying %v (%d candidates)", rule, len(batch))
+			match = append(match, rule.apply(c, batch)...)
 		}
 	}
 	return match
+}
+
+func (c *Config) logf(msg string, args ...interface{}) {
+	if c.Verbose {
+		log.Printf(msg, args...)
+	}
 }
 
 // A Policy specifies a policy for which backups to keep. When given a set of
@@ -114,13 +128,16 @@ type Policy struct {
 }
 
 // apply returns all the input archives that are expired by p.
-func (p *Policy) apply(batch []tarsnap.Archive) []tarsnap.Archive {
+func (p *Policy) apply(c *Config, batch []tarsnap.Archive) []tarsnap.Archive {
 	if p.Latest >= len(batch) {
-		return nil // everything is too new to discard
+		c.logf("+ keep %d, all candidates are recent", len(batch))
+		return nil
 	} else if p.Latest > 0 {
 		batch = batch[:len(batch)-p.Latest]
+		c.logf("+ keep latest %d, %d left", p.Latest, len(batch))
 	}
 	if p.Sample == nil {
+		c.logf("- drop %d, no sampling is enabled", len(batch))
 		return batch // no samples, discard everything else in range
 	}
 
@@ -131,17 +148,21 @@ func (p *Policy) apply(batch []tarsnap.Archive) []tarsnap.Archive {
 	// policy window. We keep the last (most recent) entry in each interval.
 	// Note that we work backward because the archives are ordered by creation
 	// timestamp in ascending order (smaller timestamps are older).
-	last := durationInterval(batch[len(batch)-1].Created.Sub(timeZero))
+	i := len(batch) - 1
+	last := durationInterval(batch[i].Created.Sub(timeZero))
 	base := ival * (last / ival)
+	c.logf("+ keep %q by sampling rule %v", batch[i].Name, p.Sample)
 
 	var drop []tarsnap.Archive
-	for i := len(batch) - 2; i >= 0; i-- {
+	for i--; i >= 0; i-- {
 		age := durationInterval(batch[i].Created.Sub(timeZero))
 		if age >= base {
 			drop = append(drop, batch[i])
+			c.logf("- drop %q by sampling rule %v", batch[i].Name, p.Sample)
 		} else {
 			// We crossed into the next bucket -- keep this representative.
 			base -= ival
+			c.logf("+ keep %q by sampling rule %v", batch[i].Name, p.Sample)
 		}
 	}
 	return drop
