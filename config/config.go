@@ -168,6 +168,15 @@ func (p *Policy) apply(c *Config, batch []tarsnap.Archive) []tarsnap.Archive {
 	return drop
 }
 
+// String renders the policy in human-readable form.
+func (p *Policy) String() string {
+	max := "∞"
+	if p.Max != forever {
+		max = fmt.Sprint(max)
+	}
+	return fmt.Sprintf("rule [%v..%s] keep %d sample %s", p.Min, max, p.Latest, p.Sample)
+}
+
 // A Backup describes a collection of files to be backed up as a unit together.
 type Backup struct {
 	// The name defines the base name of the archive. A timestamp will be
@@ -208,11 +217,13 @@ func Parse(r io.Reader) (*Config, error) {
 
 func expand(s *string) { *s = os.ExpandEnv(*s) }
 
+const forever = 1<<63 - 1
+
 func sortExp(es []*Policy) {
 	// Treat max == 0 as having no effective upper bound.
 	for _, e := range es {
 		if e.Max == 0 {
-			e.Max = 1<<63 - 1
+			e.Max = forever
 		}
 	}
 
@@ -310,7 +321,12 @@ type Sampling struct {
 	Period Interval // period over which to sample
 }
 
-func (s Sampling) String() string { return fmt.Sprintf("%d/%d", s.N, s.Period) }
+func (s *Sampling) String() string {
+	if s == nil {
+		return "none"
+	}
+	return fmt.Sprintf("%d/%d", s.N, s.Period)
+}
 
 // UnmarshalYAML decodes a sampling from a string of the form "n/iv".
 func (s *Sampling) UnmarshalYAML(unmarshal func(interface{}) error) error {
