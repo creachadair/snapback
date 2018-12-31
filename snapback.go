@@ -52,6 +52,9 @@ func main() {
 	if err != nil {
 		log.Fatalf("Loading configuration: %v", err)
 	}
+	if cfg.Verbose {
+		*doVerbose = true
+	}
 	ts := &cfg.Config
 	ts.CmdLog = logCommand
 	if ts.WorkDir == "" {
