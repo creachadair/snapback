@@ -25,7 +25,8 @@ func init() {
        %[1]s [-v]        # create new backups
 
 Create tarsnap backups of important directories. With the -v flag, the
-underlying tarsnap commands will be logged to stderr.
+underlying tarsnap commands will be logged to stderr. If -dry-run is true, no
+archives are created or deleted.
 
 With -list and -size, the non-flag arguments are used to select which archives
 to list or evaluate. Globs are permitted in these arguments.
@@ -41,7 +42,7 @@ var (
 	doList     = flag.Bool("list", false, "List known archives")
 	doPrune    = flag.Bool("prune", false, "Prune out-of-band archives")
 	doSize     = flag.Bool("size", false, "Print size statistics")
-	doDryRun   = flag.Bool("dry-run", false, "Simulate creating archives")
+	doDryRun   = flag.Bool("dry-run", false, "Simulate creating or deleting archives")
 	doVerbose  = flag.Bool("v", false, "Verbose logging")
 )
 
