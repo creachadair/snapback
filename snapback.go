@@ -107,12 +107,13 @@ func pruneArchives(cfg *config.Config, as []tarsnap.Archive) {
 	}
 	if len(prune) == 0 {
 		fmt.Fprintln(os.Stderr, "Nothing to prune")
+		return
 	} else if *doDryRun {
 		fmt.Fprintln(os.Stderr, "-- Pruning would remove these archives:")
-		fmt.Println(strings.Join(prune, "\n"))
 	} else if err := cfg.Config.Delete(prune...); err != nil {
 		log.Fatalf("Deleting archives: %v", err)
 	}
+	fmt.Println(strings.Join(prune, "\n"))
 }
 
 func printSizes(cfg *config.Config, as []tarsnap.Archive) {
