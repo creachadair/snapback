@@ -136,7 +136,7 @@ func (p *Policy) apply(c *Config, batch []tarsnap.Archive) []tarsnap.Archive {
 		batch = batch[:len(batch)-p.Latest]
 		c.logf("+ keep latest %d, %d left", p.Latest, len(batch))
 	}
-	if p.Sample == nil {
+	if p.Sample == nil || p.Sample.N == 0 {
 		c.logf("- drop %d, no sampling is enabled", len(batch))
 		return batch // no samples, discard everything else in range
 	}
@@ -329,10 +329,16 @@ func (s *Sampling) String() string {
 }
 
 // UnmarshalYAML decodes a sampling from a string of the form "n/iv".
+// As a special case, "none" is allowed as an alias for 0/iv.
 func (s *Sampling) UnmarshalYAML(unmarshal func(interface{}) error) error {
 	var raw string
 	if err := unmarshal(&raw); err != nil {
 		return err
+	}
+	if raw == "none" {
+		s.N = 0
+		s.Period = 0
+		return nil
 	}
 	ps := strings.SplitN(raw, "/", 2)
 	if len(ps) != 2 {
