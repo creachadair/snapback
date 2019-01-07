@@ -99,7 +99,7 @@ backup:
   include: [Pictures]
   expiration:
   - until: 10 days
-    latest: 1000     # one way to express "keep it all"
+    sample: all      # keep everything in this interval
   - after: 10 days
 	sample: 1/month
 ```

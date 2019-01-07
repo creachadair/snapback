@@ -139,6 +139,9 @@ func (p *Policy) apply(c *Config, batch []tarsnap.Archive) []tarsnap.Archive {
 	if p.Sample == nil || p.Sample.N == 0 {
 		c.logf("- drop %d, no sampling is enabled", len(batch))
 		return batch // no samples, discard everything else in range
+	} else if p.Sample.Period == 0 {
+		c.logf("+ keep all %d, sample period is zero", len(batch))
+		return nil
 	}
 
 	// The width of the scaled sampling interval, where s/p = 1/ival.
@@ -322,14 +325,17 @@ type Sampling struct {
 }
 
 func (s *Sampling) String() string {
-	if s == nil {
+	if s == nil || s.N == 0 {
 		return "none"
+	} else if s.Period == 0 {
+		return "all"
 	}
 	return fmt.Sprintf("%d/%d", s.N, s.Period)
 }
 
 // UnmarshalYAML decodes a sampling from a string of the form "n/iv".
-// As a special case, "none" is allowed as an alias for 0/iv.
+// As special cases, "none" is allowed as an alias for 0/iv and "all" as an
+// alias for 1/0.
 func (s *Sampling) UnmarshalYAML(unmarshal func(interface{}) error) error {
 	var raw string
 	if err := unmarshal(&raw); err != nil {
@@ -337,6 +343,10 @@ func (s *Sampling) UnmarshalYAML(unmarshal func(interface{}) error) error {
 	}
 	if raw == "none" {
 		s.N = 0
+		s.Period = 0
+		return nil
+	} else if raw == "all" {
+		s.N = 1
 		s.Period = 0
 		return nil
 	}
