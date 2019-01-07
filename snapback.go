@@ -32,6 +32,10 @@ archives are created or deleted.
 With -list and -size, the non-flag arguments are used to select which archives
 to list or evaluate. Globs are permitted in these arguments.
 
+With -prune, archives filtered by expiration policies are deleted. Archive ages
+are based on the current time. For testing, you may override this by setting
+the SNAPBACK_TIME environment to a string of the form 2006-01-02T15:04:05.
+
 Options:
 `, filepath.Base(os.Args[0]))
 		flag.PrintDefaults()
@@ -123,8 +127,18 @@ func listArchives(_ *config.Config, as []tarsnap.Archive) {
 }
 
 func pruneArchives(cfg *config.Config, as []tarsnap.Archive) {
+	now := time.Now()
+	if et, ok := os.LookupEnv("SNAPBACK_TIME"); ok {
+		t, err := time.Parse("2006-01-02T15:04:05", et)
+		if err != nil {
+			log.Fatalf("Parsing SNAPBACK_TIME %q: %v", et, err)
+		}
+		now = t
+		fmt.Fprintf(os.Stderr, "Using current time from SNAPBACK_TIME: %v\n", now)
+	}
+
 	var prune []string
-	for _, p := range cfg.FindExpired(as, time.Now()) {
+	for _, p := range cfg.FindExpired(as, now) {
 		prune = append(prune, p.Name)
 	}
 	if len(prune) == 0 {
