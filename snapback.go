@@ -15,6 +15,7 @@ import (
 
 	"bitbucket.org/creachadair/shell"
 	"bitbucket.org/creachadair/snapback/config"
+	"bitbucket.org/creachadair/stringset"
 	"bitbucket.org/creachadair/tarsnap"
 )
 
@@ -32,9 +33,10 @@ archives are created or deleted.
 With -list and -size, the non-flag arguments are used to select which archives
 to list or evaluate. Globs are permitted in these arguments.
 
-With -prune, archives filtered by expiration policies are deleted. Archive ages
-are based on the current time. For testing, you may override this by setting
-the SNAPBACK_TIME environment to a string of the form 2006-01-02T15:04:05.
+With -prune, archives filtered by expiration policies are deleted. Non-flag
+arguments specify archive sets to evaluate for pruning. Archive ages are pruned
+based on the current time. For testing, you may override this by setting the
+SNAPBACK_TIME environment to a string of the form 2006-01-02T15:04:05.
 
 Options:
 `, filepath.Base(os.Args[0]))
@@ -136,10 +138,19 @@ func pruneArchives(cfg *config.Config, as []tarsnap.Archive) {
 		now = t
 		fmt.Fprintf(os.Stderr, "Using current time from SNAPBACK_TIME: %v\n", now)
 	}
+	pick := func(tarsnap.Archive) bool { return true }
+	if flag.NArg() != 0 {
+		s := stringset.New(flag.Args()...)
+		pick = func(a tarsnap.Archive) bool {
+			return s.Contains(a.Base)
+		}
+	}
 
 	var prune []string
 	for _, p := range cfg.FindExpired(as, now) {
-		prune = append(prune, p.Name)
+		if pick(p) {
+			prune = append(prune, p.Name)
+		}
 	}
 	if len(prune) == 0 {
 		fmt.Fprintln(os.Stderr, "Nothing to prune")
