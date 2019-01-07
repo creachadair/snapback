@@ -155,18 +155,18 @@ func (p *Policy) apply(c *Config, batch []tarsnap.Archive) []tarsnap.Archive {
 	i := len(batch) - 1
 	last := durationInterval(batch[i].Created.Sub(timeZero))
 	base := ival * (last / ival)
-	c.logf("+ keep %q by sampling rule %v", batch[i].Name, p.Sample)
+	c.logf("+ keep %q by sampling rule %v [base %v]", batch[i].Name, p.Sample, base)
 
 	var drop []tarsnap.Archive
 	for i--; i >= 0; i-- {
 		age := durationInterval(batch[i].Created.Sub(timeZero))
 		if age >= base {
 			drop = append(drop, batch[i])
-			c.logf("- drop %q by sampling rule %v", batch[i].Name, p.Sample)
+			c.logf("- drop %q by sampling rule %v [%v > %v]", batch[i].Name, p.Sample, age, base)
 		} else {
 			// We crossed into the next bucket -- keep this representative.
 			base -= ival
-			c.logf("+ keep %q by sampling rule %v", batch[i].Name, p.Sample)
+			c.logf("+ keep %q by sampling rule %v [base %v]", batch[i].Name, p.Sample, base)
 		}
 	}
 	return drop
