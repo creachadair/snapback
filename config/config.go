@@ -63,6 +63,7 @@ func (c *Config) FindExpired(arch []tarsnap.Archive, now time.Time) []tarsnap.Ar
 			c.logf("No expiration rules for %s [skipping]", b.Name)
 			continue // nothing to do
 		}
+		c.logf("Applying %d expiration rules for %s", len(exp), b.Name)
 
 		// Now, find all the archives belonging this backup which are affected by
 		// some rule, and record which if any rule applies. If no rule applies,
@@ -81,7 +82,7 @@ func (c *Config) FindExpired(arch []tarsnap.Archive, now time.Time) []tarsnap.Ar
 
 		// Finally, apply the policy...
 		for rule, batch := range rules {
-			c.logf("Applying %v (%d candidates)", rule, len(batch))
+			c.logf(":: %v (%d candidates)", rule, len(batch))
 			match = append(match, rule.apply(c, batch)...)
 		}
 	}
