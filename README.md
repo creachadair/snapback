@@ -51,6 +51,9 @@ keyFile: "path to key file"  # default: uses tarsnap settings
 # Where backups should be started from by default. The default is $HOME.
 workDir: "directory path"
 
+# Enable verbose logging output. The default is false.
+verbose: true
+
 # Default expiration settings. These settings govern how old backups are
 # cleaned up by snapback -prune, and are used for every backup that does
 # not provide its own expiration rules.
