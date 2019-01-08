@@ -204,6 +204,8 @@ func createBackups(cfg *config.Config) error {
 		if err := cfg.Config.Create(name, opts); err != nil {
 			log.Printf("ERROR: %s: %v", name, err)
 			nerrs++
+		} else {
+			fmt.Println(name)
 		}
 	}
 	if nerrs > 0 {
