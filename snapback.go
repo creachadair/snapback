@@ -76,7 +76,7 @@ func main() {
 	// If we need a list of existing archives, grab it.
 	var arch []tarsnap.Archive
 	if *doList || *doPrune || (*doSize && hasGlob(flag.Args())) {
-		arch, err = ts.Archives()
+		arch, err = ts.List()
 		if err != nil {
 			log.Fatalf("Listing archives: %v", err)
 		}
