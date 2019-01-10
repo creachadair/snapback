@@ -46,6 +46,7 @@ func (c *Config) FindExpired(arch []tarsnap.Archive, now time.Time) []tarsnap.Ar
 	sets := make(map[string][]tarsnap.Archive)
 	for _, a := range arch {
 		if _, err := time.Parse(".20060102-1504", a.Tag); err != nil {
+			c.logf("Skipping archive %q (wrong name format)", a.Name)
 			continue // not the correct format
 		}
 		sets[a.Base] = append(sets[a.Base], a)
