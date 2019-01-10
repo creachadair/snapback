@@ -181,6 +181,16 @@ func (p *Policy) String() string {
 	return fmt.Sprintf("rule [%v..%s] keep %d sample %s", p.Min, max, p.Latest, p.Sample)
 }
 
+// Less reports whether p precedes q in canonical order. Policies are ordered
+// by the width of their interval, with ties broken by start time.
+func (p *Policy) Less(q *Policy) bool {
+	u, v := p.Max-p.Min, q.Max-q.Min
+	if u == v {
+		return p.Min > q.Min
+	}
+	return u < v
+}
+
 // A Backup describes a collection of files to be backed up as a unit together.
 type Backup struct {
 	// The name defines the base name of the archive. A timestamp will be
@@ -233,9 +243,7 @@ func sortExp(es []*Policy) {
 
 	// Order rules by the width of their interval, with earlier intervals first.
 	sort.Slice(es, func(i, j int) bool {
-		u := es[i].Max - es[i].Min
-		v := es[j].Max - es[j].Min
-		return u < v
+		return es[i].Less(es[j])
 	})
 }
 
