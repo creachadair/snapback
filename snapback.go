@@ -169,19 +169,20 @@ func pruneArchives(cfg *config.Config, as []tarsnap.Archive) {
 		now = t
 		fmt.Fprintf(os.Stderr, "Using current time from SNAPBACK_TIME: %v\n", now)
 	}
-	pick := func(tarsnap.Archive) bool { return true }
+	chosen := as
 	if flag.NArg() != 0 {
+		chosen = nil
 		s := stringset.New(flag.Args()...)
-		pick = func(a tarsnap.Archive) bool {
-			return s.Contains(a.Base)
+		for _, a := range as {
+			if s.Contains(a.Base) {
+				chosen = append(chosen, a)
+			}
 		}
 	}
 
 	var prune []string
-	for _, p := range cfg.FindExpired(as, now) {
-		if pick(p) {
-			prune = append(prune, p.Name)
-		}
+	for _, p := range cfg.FindExpired(chosen, now) {
+		prune = append(prune, p.Name)
 	}
 	if len(prune) == 0 {
 		fmt.Fprintln(os.Stderr, "Nothing to prune")
