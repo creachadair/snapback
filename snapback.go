@@ -131,17 +131,13 @@ func findArchives(cfg *config.Config, _ []tarsnap.Archive) {
 	}
 	tw := tabwriter.NewWriter(os.Stdout, 0, 8, 3, ' ', 0)
 	for _, path := range flag.Args() {
-		var names []string
-		for _, b := range cfg.FindPath(path) {
-			names = append(names, b.Backup.Name)
+		bs := cfg.FindPath(path)
+		for _, b := range bs {
+			fmt.Fprint(tw, b.Relative, "\t", b.Backup.Name, "\n")
 		}
-		if len(names) == 0 {
-			if !*doVerbose {
-				continue
-			}
-			names = append(names, "NONE")
+		if len(bs) == 0 && *doVerbose {
+			fmt.Fprint(tw, path, "\t", "NONE", "\n")
 		}
-		fmt.Fprint(tw, path, "\t", strings.Join(names, ", "), "\n")
 	}
 	tw.Flush()
 }
