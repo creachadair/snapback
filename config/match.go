@@ -68,26 +68,29 @@ func containsPath(b *Backup, wd, path string) (string, bool) {
 	if base == "" {
 		base = wd
 	}
+	needle := path
 	if !filepath.IsAbs(path) {
-		path = filepath.Join(base, path)
-	}
-	rel, err := filepath.Rel(base, path)
-	if err != nil {
-		return path, false
+		rel, err := filepath.Rel(base, filepath.Join(base, path))
+		if err != nil {
+			return path, false
+		}
+		needle = rel
+	} else if t := strings.TrimPrefix(path, base+"/"); t != path {
+		needle = t
 	}
 
 	// The resulting path is captured if it matches at least one inclusion and
 	// does not match any exclusions. Check the exclusions first so that we can
 	// short circuit out of the inclusion check.
 	for _, ex := range b.Exclude {
-		if pathMatchesPattern(rel, ex) {
-			return rel, false
+		if pathMatchesPattern(needle, ex) {
+			return needle, false
 		}
 	}
 	for _, in := range b.Include {
-		if rel == in || strings.HasPrefix(rel, in+"/") {
-			return rel, true
+		if needle == in || strings.HasPrefix(needle, in+"/") {
+			return needle, true
 		}
 	}
-	return rel, false
+	return needle, false
 }
