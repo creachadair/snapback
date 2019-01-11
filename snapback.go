@@ -21,27 +21,34 @@ import (
 
 func init() {
 	flag.Usage = func() {
-		fmt.Fprintf(os.Stderr, `Usage: %[1]s -find ... # find files in backups
-       %[1]s -list     # list existing backups
-       %[1]s -prune    # clean up old backups
-       %[1]s -size     # show sizes of stored data
-       %[1]s [-v]      # create new backups
+		fmt.Fprintf(os.Stderr, `Usage: %[1]s -find <path>... # find files in backups
+       %[1]s -list           # list existing backups
+       %[1]s -prune          # clean up old backups
+       %[1]s -restore <dir>  # restore files or directories to <dir>
+       %[1]s -size           # show sizes of stored data
+       %[1]s [-v]            # create new backups
 
 Create tarsnap backups of important directories. With the -v flag, the
 underlying tarsnap commands will be logged to stderr. If -dry-run is true, no
 archives are created or deleted.
 
-With -list and -size, the non-flag arguments are used to select which archives
-to list or evaluate. Globs are permitted in these arguments.
-
 With -find, the non-flag arguments specify file or directory paths to locate.
 The output reports which backup sets contain each specified path. Paths that do
 not match any known backup are omitted unless -v is also given.
+
+With -list and -size, the non-flag arguments are used to select which archives
+to list or evaluate. Globs are permitted in these arguments.
 
 With -prune, archives filtered by expiration policies are deleted. Non-flag
 arguments specify archive sets to evaluate for pruning. Archive ages are pruned
 based on the current time. For testing, you may override this by setting the
 SNAPBACK_TIME environment to a string of the form 2006-01-02T15:04:05.
+
+With -restore, the non-flag arguments specify files or directories to restore
+into the specified output directory from the most recent matching backup. 
+The output directory is created if it does not exist. A path ending in "/"
+identifies a directory, which is fully restored with all its
+contents. Otherwise, it names a single file.
 
 Options:
 `, filepath.Base(os.Args[0]))
@@ -55,6 +62,7 @@ var (
 	doFind     = flag.Bool("find", false, "Find backups containing the specified paths")
 	doList     = flag.Bool("list", false, "List known archives")
 	doPrune    = flag.Bool("prune", false, "Prune out-of-band archives")
+	doRestore  = flag.String("restore", "", "Restore files to this directory")
 	doSize     = flag.Bool("size", false, "Print size statistics")
 	doDryRun   = flag.Bool("dry-run", false, "Simulate creating or deleting archives")
 	doVerbose  = flag.Bool("v", false, "Verbose logging")
@@ -99,7 +107,10 @@ func main() {
 		pruneArchives(cfg, arch)
 		return
 	}
-
+	if *doRestore != "" {
+		restoreFiles(cfg, *doRestore)
+		return
+	}
 	if *doSize {
 		printSizes(cfg, arch)
 		return
@@ -122,7 +133,7 @@ func findArchives(cfg *config.Config, _ []tarsnap.Archive) {
 	for _, path := range flag.Args() {
 		var names []string
 		for _, b := range cfg.FindPath(path) {
-			names = append(names, b.Name)
+			names = append(names, b.Backup.Name)
 		}
 		if len(names) == 0 {
 			if !*doVerbose {
@@ -193,6 +204,69 @@ func pruneArchives(cfg *config.Config, as []tarsnap.Archive) {
 		log.Fatalf("Deleting archives: %v", err)
 	}
 	fmt.Println(strings.Join(prune, "\n"))
+}
+
+func restoreFiles(cfg *config.Config, dir string) {
+	if flag.NArg() == 0 {
+		log.Fatal("No paths were specified to -restore")
+	}
+
+	// Locate the backup set for each requested path.  For now this must be
+	// unique or it's an error.
+	need := make(map[string][]string)
+	for _, path := range flag.Args() {
+		bs := cfg.FindPath(path)
+		if len(bs) == 0 {
+			log.Fatalf("No backups found for %q", path)
+		} else if len(bs) > 1 {
+			log.Fatalf("Multiple backups found for %q", path)
+		}
+		n := bs[0].Backup.Name
+		need[n] = append(need[n], bs[0].Relative)
+	}
+
+	// Now that we have something to restore, it's worth listing the archives.
+	fmt.Fprintln(os.Stderr, "-- Listing available archives")
+	as, err := cfg.Config.List()
+	if err != nil {
+		log.Fatalf("Listing archives: %v", err)
+	}
+
+	if err := os.MkdirAll(dir, 0700); err != nil {
+		log.Fatalf("Creating output directory: %v", err)
+	}
+
+	for set, paths := range need {
+		opts := tarsnap.ExtractOptions{
+			Include:            stringset.New(paths...).Elements(),
+			WorkDir:            dir,
+			RestorePermissions: true,
+			FastRead:           true, // maybe, see below
+		}
+
+		// If possible, we'll use fast reads to avoid having to scan the whole
+		// archive.  But we can only do this if the user did not request the
+		// restoration of directories.
+		for _, path := range paths {
+			if strings.HasSuffix(path, "/") {
+				opts.FastRead = false
+				break
+			}
+		}
+
+		// Find the latest archive and run the extraction.
+		arch, ok := tarsnap.Archives(as).Latest(set)
+		if !ok {
+			log.Fatalf("Unable to find the latest %q archive", set)
+		}
+		fmt.Fprintf(os.Stderr, "-- Restoring from %q\n » %s\n",
+			arch.Name, strings.Join(opts.Include, "\n » "))
+		if *doDryRun {
+			fmt.Fprintln(os.Stderr, "[dry run, not restoring]")
+		} else if err := cfg.Config.Extract(arch.Name, opts); err != nil {
+			log.Fatalf("Extracting from %q: %v", arch.Name, err)
+		}
+	}
 }
 
 func printSizes(cfg *config.Config, as []tarsnap.Archive) {
