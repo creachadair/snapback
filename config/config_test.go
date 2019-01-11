@@ -40,7 +40,7 @@ func TestFindPath(t *testing.T) {
 		Backup: []*Backup{{
 			Name: "alpha",
 			CreateOptions: tarsnap.CreateOptions{
-				WorkDir: "bar",
+				WorkDir: "/home/rooty",
 				Include: []string{"bar/baz", "frob.cc"},
 				Exclude: []string{"bar/baz/nuut/**"},
 			},
@@ -52,7 +52,7 @@ func TestFindPath(t *testing.T) {
 			},
 		}},
 		Config: tarsnap.Config{
-			WorkDir: "diabolo",
+			WorkDir: "/diabolo",
 		},
 	}
 
@@ -77,6 +77,10 @@ func TestFindPath(t *testing.T) {
 
 		// A path that matches both.
 		{"bar/baz/frob/nut.py", "alpha bravo"},
+
+		// Absolute paths are relativized.
+		{"/diabolo/foo/quux/meeple", "bravo"},
+		{"/home/rooty/frob.cc", "alpha"},
 	}
 
 	for _, test := range tests {

@@ -68,7 +68,10 @@ func containsPath(b *Backup, wd, path string) bool {
 	if base == "" {
 		base = wd
 	}
-	rel, err := filepath.Rel(base, filepath.Join(base, path))
+	if !filepath.IsAbs(path) {
+		path = filepath.Join(base, path)
+	}
+	rel, err := filepath.Rel(base, path)
 	if err != nil {
 		return false
 	}
