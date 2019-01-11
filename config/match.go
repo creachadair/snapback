@@ -62,7 +62,7 @@ func pathMatchesPattern(path, pat string) bool {
 	return err == nil && ok
 }
 
-func containsPath(b *Backup, wd, path string) bool {
+func containsPath(b *Backup, wd, path string) (string, bool) {
 	// Normalize the path to be relative to where this backup was created.
 	base := b.WorkDir
 	if base == "" {
@@ -73,7 +73,7 @@ func containsPath(b *Backup, wd, path string) bool {
 	}
 	rel, err := filepath.Rel(base, path)
 	if err != nil {
-		return false
+		return path, false
 	}
 
 	// The resulting path is captured if it matches at least one inclusion and
@@ -81,13 +81,13 @@ func containsPath(b *Backup, wd, path string) bool {
 	// short circuit out of the inclusion check.
 	for _, ex := range b.Exclude {
 		if pathMatchesPattern(rel, ex) {
-			return false
+			return rel, false
 		}
 	}
 	for _, in := range b.Include {
 		if rel == in || strings.HasPrefix(rel, in+"/") {
-			return true
+			return rel, true
 		}
 	}
-	return false
+	return rel, false
 }

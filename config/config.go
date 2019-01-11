@@ -35,13 +35,23 @@ type Config struct {
 	tarsnap.Config `yaml:",inline"`
 }
 
+// A BackupPath describes a path relative to a particular backup.
+type BackupPath struct {
+	Relative string
+	Backup   *Backup
+}
+
 // FindPath reports the backups that claim path, or nil if there are none.
 // N.B. Only the current backup set configurations are examined.
-func (c *Config) FindPath(path string) []*Backup {
-	var out []*Backup
+func (c *Config) FindPath(path string) []BackupPath {
+	var out []BackupPath
 	for _, b := range c.Backup {
-		if containsPath(b, c.WorkDir, path) {
-			out = append(out, b)
+		rel, ok := containsPath(b, c.WorkDir, path)
+		if ok {
+			out = append(out, BackupPath{
+				Relative: rel,
+				Backup:   b,
+			})
 		}
 	}
 	return out

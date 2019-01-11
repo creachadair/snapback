@@ -86,7 +86,7 @@ func TestFindPath(t *testing.T) {
 	for _, test := range tests {
 		var names []string
 		for _, b := range cfg.FindPath(test.path) {
-			names = append(names, b.Name)
+			names = append(names, b.Backup.Name)
 		}
 		got := strings.Join(names, " ")
 		if got != test.want {
