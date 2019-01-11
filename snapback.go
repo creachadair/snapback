@@ -118,7 +118,7 @@ func findArchives(cfg *config.Config, _ []tarsnap.Archive) {
 	if flag.NArg() == 0 {
 		log.Fatal("No paths were specified to -find")
 	}
-	tw := tabwriter.NewWriter(os.Stdout, 0, 8, 1, ' ', 0)
+	tw := tabwriter.NewWriter(os.Stdout, 0, 8, 3, ' ', 0)
 	for _, path := range flag.Args() {
 		var names []string
 		for _, b := range cfg.FindPath(path) {
@@ -211,7 +211,7 @@ func printSizes(cfg *config.Config, as []tarsnap.Archive) {
 	if err != nil {
 		log.Fatalf("Reading stats: %v", err)
 	}
-	tw := tabwriter.NewWriter(os.Stdout, 0, 8, 1, ' ', 0)
+	tw := tabwriter.NewWriter(os.Stdout, 0, 8, 3, ' ', 0)
 	fmt.Fprintf(tw, "TOTAL\t%s raw\t%s comp\t%s uniq\t%s incr\n",
 		H(info.All.InputBytes), H(info.All.CompressedBytes),
 		H(info.All.UniqueBytes), H(info.All.CompressedUniqueBytes))
