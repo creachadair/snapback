@@ -47,12 +47,27 @@ func (c *Config) FindPath(path string) []BackupPath {
 	var out []BackupPath
 	for _, b := range c.Backup {
 		rel, ok := containsPath(b, c.WorkDir, path)
-		if ok {
-			out = append(out, BackupPath{
-				Relative: rel,
-				Backup:   b,
-			})
+		if !ok {
+			continue
 		}
+
+		// Apply any modification rules to the path, so that the caller gets the
+		// name that occurs in the backup set.
+		for _, m := range b.Modify {
+			r, err := tarsnap.ParseRule(m)
+			if err != nil {
+				log.Printf("Warning: invalid substitution rule %#q: %v [ignored]", m, err)
+				continue
+			}
+			if s, ok := r.Apply(rel); ok {
+				rel = s
+				break
+			}
+		}
+		out = append(out, BackupPath{
+			Relative: rel,
+			Backup:   b,
+		})
 	}
 	return out
 }
