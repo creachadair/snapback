@@ -21,10 +21,11 @@ import (
 
 func init() {
 	flag.Usage = func() {
-		fmt.Fprintf(os.Stderr, `Usage: %[1]s [-v] -list  # list existing backups
-       %[1]s [-v] -prune # clean up old backups
-       %[1]s [-v] -size  # show sizes of stored data
-       %[1]s [-v]        # create new backups
+		fmt.Fprintf(os.Stderr, `Usage: %[1]s -find ... # find files in backups
+       %[1]s -list     # list existing backups
+       %[1]s -prune    # clean up old backups
+       %[1]s -size     # show sizes of stored data
+       %[1]s [-v]      # create new backups
 
 Create tarsnap backups of important directories. With the -v flag, the
 underlying tarsnap commands will be logged to stderr. If -dry-run is true, no
@@ -32,6 +33,10 @@ archives are created or deleted.
 
 With -list and -size, the non-flag arguments are used to select which archives
 to list or evaluate. Globs are permitted in these arguments.
+
+With -find, the non-flag arguments specify file or directory paths to locate.
+The output reports which backup sets contain each specified path. Paths that do
+not match any known backup are omitted unless -v is also given.
 
 With -prune, archives filtered by expiration policies are deleted. Non-flag
 arguments specify archive sets to evaluate for pruning. Archive ages are pruned
@@ -47,6 +52,7 @@ Options:
 var (
 	configFile = flag.String("config", "$HOME/.snapback", "Configuration file")
 	outFormat  = flag.String("format", "", "Output format (Go template)")
+	doFind     = flag.Bool("find", false, "Find backups containing the specified paths")
 	doList     = flag.Bool("list", false, "List known archives")
 	doPrune    = flag.Bool("prune", false, "Prune out-of-band archives")
 	doSize     = flag.Bool("size", false, "Print size statistics")
@@ -81,6 +87,10 @@ func main() {
 			log.Fatalf("Listing archives: %v", err)
 		}
 	}
+	if *doFind {
+		findArchives(cfg, arch)
+		return
+	}
 	if *doList {
 		listArchives(cfg, arch)
 		return
@@ -102,6 +112,27 @@ func main() {
 		log.Fatalf("Failed: %v", err)
 	}
 	log.Printf("Backups finished [%v elapsed]", time.Since(start).Round(time.Second))
+}
+
+func findArchives(cfg *config.Config, _ []tarsnap.Archive) {
+	if flag.NArg() == 0 {
+		log.Fatal("No paths were specified to -find")
+	}
+	tw := tabwriter.NewWriter(os.Stdout, 0, 8, 1, ' ', 0)
+	for _, path := range flag.Args() {
+		var names []string
+		for _, b := range cfg.FindPath(path) {
+			names = append(names, b.Name)
+		}
+		if len(names) == 0 {
+			if !*doVerbose {
+				continue
+			}
+			names = append(names, "NONE")
+		}
+		fmt.Fprint(tw, path, "\t", strings.Join(names, ", "), "\n")
+	}
+	tw.Flush()
 }
 
 func listArchives(_ *config.Config, as []tarsnap.Archive) {
