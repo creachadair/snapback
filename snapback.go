@@ -209,7 +209,8 @@ func restoreFiles(cfg *config.Config, dir string) {
 
 	// Locate the backup set for each requested path.  For now this must be
 	// unique or it's an error.
-	need := make(map[string][]string)
+	need := make(map[string][]string) // :: base → paths
+	slow := make(map[string]bool)     // :: base → slow read necessary
 	for _, path := range flag.Args() {
 		bs := cfg.FindPath(path)
 		if len(bs) == 0 {
@@ -218,6 +219,13 @@ func restoreFiles(cfg *config.Config, dir string) {
 			log.Fatalf("Multiple backups found for %q", path)
 		}
 		n := bs[0].Backup.Name
+
+		// If possible, we'll use fast reads to avoid having to scan the whole
+		// archive.  But we can only do this if the user did not request the
+		// restoration of directories.
+		if strings.HasSuffix(path, "/") {
+			slow[n] = true
+		}
 		need[n] = append(need[n], bs[0].Relative)
 	}
 
@@ -237,17 +245,7 @@ func restoreFiles(cfg *config.Config, dir string) {
 			Include:            stringset.New(paths...).Elements(),
 			WorkDir:            dir,
 			RestorePermissions: true,
-			FastRead:           true, // maybe, see below
-		}
-
-		// If possible, we'll use fast reads to avoid having to scan the whole
-		// archive.  But we can only do this if the user did not request the
-		// restoration of directories.
-		for _, path := range paths {
-			if strings.HasSuffix(path, "/") {
-				opts.FastRead = false
-				break
-			}
+			FastRead:           !slow[set],
 		}
 
 		// Find the latest archive and run the extraction.
