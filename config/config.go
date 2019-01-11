@@ -35,6 +35,18 @@ type Config struct {
 	tarsnap.Config `yaml:",inline"`
 }
 
+// FindPath reports the backups that claim path, or nil if there are none.
+// N.B. Only the current backup set configurations are examined.
+func (c *Config) FindPath(path string) []*Backup {
+	var out []*Backup
+	for _, b := range c.Backup {
+		if containsPath(b, c.WorkDir, path) {
+			out = append(out, b)
+		}
+	}
+	return out
+}
+
 // FindExpired returns a slice of the archives in arch that are eligible for
 // removal under the expiration policies in effect for c, given that now is the
 // moment denoting the present.
