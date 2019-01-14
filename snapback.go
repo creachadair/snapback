@@ -41,14 +41,14 @@ to list or evaluate. Globs are permitted in these arguments.
 
 With -prune, archives filtered by expiration policies are deleted. Non-flag
 arguments specify archive sets to evaluate for pruning. Archive ages are pruned
-based on the current time. For testing, you may override this by setting the
-SNAPBACK_TIME environment to a string of the form 2006-01-02T15:04:05.
+based on the current time. For testing, you may override this by setting -now.
 
 With -restore, the non-flag arguments specify files or directories to restore
-into the specified output directory from the most recent matching backup. 
+into the specified output directory from the most recent matching backup.
 The output directory is created if it does not exist. A path ending in "/"
-identifies a directory, which is fully restored with all its
-contents. Otherwise, it names a single file.
+identifies a directory, which is fully restored with all its contents.
+Otherwise, it names a single file. To restore files from a different backup
+(rather than the most recent), use -now.
 
 Options:
 `, filepath.Base(os.Args[0]))
@@ -66,6 +66,7 @@ var (
 	doSize     = flag.Bool("size", false, "Print size statistics")
 	doDryRun   = flag.Bool("dry-run", false, "Simulate creating or deleting archives")
 	doVerbose  = flag.Bool("v", false, "Verbose logging")
+	snapTime   = flag.String("now", "", "Effective current time (2006-01-02T15:04:05; default is wallclock time)")
 )
 
 func main() {
@@ -166,16 +167,19 @@ func listArchives(_ *config.Config, as []tarsnap.Archive) {
 	}
 }
 
-func pruneArchives(cfg *config.Config, as []tarsnap.Archive) {
-	now := time.Now()
-	if et, ok := os.LookupEnv("SNAPBACK_TIME"); ok {
-		t, err := time.Parse("2006-01-02T15:04:05", et)
+func effectiveNow() time.Time {
+	if *snapTime != "" {
+		et, err := time.Parse("2006-01-02T15:04:05", *snapTime)
 		if err != nil {
-			log.Fatalf("Parsing SNAPBACK_TIME %q: %v", et, err)
+			log.Fatalf("Invalid time %q: %v", *snapTime, err)
 		}
-		now = t
-		fmt.Fprintf(os.Stderr, "Using current time from SNAPBACK_TIME: %v\n", now)
+		return et
 	}
+	return time.Now()
+}
+
+func pruneArchives(cfg *config.Config, as []tarsnap.Archive) {
+	now := effectiveNow()
 	chosen := as
 	if flag.NArg() != 0 {
 		chosen = nil
@@ -206,6 +210,7 @@ func restoreFiles(cfg *config.Config, dir string) {
 	if flag.NArg() == 0 {
 		log.Fatal("No paths were specified to -restore")
 	}
+	now := effectiveNow()
 
 	// Locate the backup set for each requested path.  For now this must be
 	// unique or it's an error.
@@ -249,7 +254,7 @@ func restoreFiles(cfg *config.Config, dir string) {
 		}
 
 		// Find the latest archive and run the extraction.
-		arch, ok := tarsnap.Archives(as).Latest(set)
+		arch, ok := tarsnap.Archives(as).LatestAsOf(set, now)
 		if !ok {
 			log.Fatalf("Unable to find the latest %q archive", set)
 		}
