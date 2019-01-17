@@ -28,6 +28,9 @@ type Config struct {
 	// Default expiration policies.
 	Expiration []*Policy
 
+	// Named expiration policy sets.
+	Policy map[string][]*Policy
+
 	// Enable verbose logging.
 	Verbose bool
 
@@ -72,6 +75,17 @@ func (c *Config) FindPath(path string) []BackupPath {
 	return out
 }
 
+// findPolicy returns the expiration rules for this backup. If it does not have
+// any of its own, use the defaults. If there are no defaults, nothing expires.
+func (c *Config) findPolicy(b *Backup) []*Policy {
+	if len(b.Expiration) != 0 {
+		return b.Expiration
+	} else if b.Policy == "" || b.Policy == "default" {
+		return c.Expiration
+	}
+	return c.Policy[b.Policy]
+}
+
 // FindExpired returns a slice of the archives in arch that are eligible for
 // removal under the expiration policies in effect for c, given that now is the
 // moment denoting the present.
@@ -91,12 +105,7 @@ func (c *Config) FindExpired(arch []tarsnap.Archive, now time.Time) []tarsnap.Ar
 
 	var match []tarsnap.Archive
 	for _, b := range c.Backup {
-		// Find the expiration rules for this backup. If it does not have any of
-		// its own, use the defaults. If there are no defaults, nothing expires.
-		exp := b.Expiration
-		if len(exp) == 0 {
-			exp = c.Expiration
-		}
+		exp := c.findPolicy(b)
 		if len(exp) == 0 {
 			c.logf("No expiration rules for %s [skipping]", b.Name)
 			continue // nothing to do
@@ -238,6 +247,9 @@ type Backup struct {
 	// Expiration policies.
 	Expiration []*Policy
 
+	// Named expiration policy (ignored if Expiration is set).
+	Policy string
+
 	// The archive creation options for this backup.
 	tarsnap.CreateOptions `yaml:",inline"`
 }
@@ -260,6 +272,9 @@ func Parse(r io.Reader) (*Config, error) {
 		seen[b.Name] = true
 		sortExp(b.Expiration)
 		expand(&b.WorkDir)
+	}
+	for _, named := range cfg.Policy {
+		sortExp(named)
 	}
 	sortExp(cfg.Expiration)
 	expand(&cfg.Keyfile)

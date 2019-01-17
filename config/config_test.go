@@ -35,6 +35,46 @@ func TestPolicyOrder(t *testing.T) {
 	}
 }
 
+func TestPolicyAssignment(t *testing.T) {
+	cfg := &Config{
+		Expiration: []*Policy{{Latest: 1}},
+		Policy: map[string][]*Policy{
+			"named":   {{Latest: 2}},
+			"default": {{Latest: 666}}, // should not be assigned
+		},
+	}
+	tests := []struct {
+		input *Backup
+		want  int
+	}{
+		// An explicit expiration.
+		{input: &Backup{
+			Expiration: []*Policy{{Latest: 3}},
+		}, want: 3},
+
+		// Explicit overrides policy.
+		{input: &Backup{
+			Expiration: []*Policy{{Latest: 4}},
+			Policy:     "named",
+		}, want: 4},
+
+		// The names "default" and "" use the default policy.
+		{input: &Backup{Policy: "default"}, want: 1},
+		{input: &Backup{Policy: ""}, want: 1},
+
+		// Other named policies are chosen.
+		{input: &Backup{Policy: "named"}, want: 2},
+	}
+	for _, test := range tests {
+		p := cfg.findPolicy(test.input)
+		if len(p) == 0 {
+			t.Errorf("Policy for %+v not found", test.input)
+		} else if got, want := p[0].Latest, test.want; got != want {
+			t.Errorf("Wrong policy for %+v: got %v, want %v", test.input, got, want)
+		}
+	}
+}
+
 func TestFindPath(t *testing.T) {
 	cfg := &Config{
 		Backup: []*Backup{{
