@@ -69,6 +69,17 @@ expiration:
 - after: 6 months # after six months, keep one archive per month.
   sample: 1/month
 
+# It is also possible to have named expiration policies. A backup can
+# refer to such a policy by name (see below). If a backup has an explicit
+# expiration policy, it supersedes any named policy. The name "default"
+# is an alias for the default policy (see above).
+policy:
+  short:
+  - latest: 2      # keep the latest two archives of every set
+    sample: 1/day  # otherwise keep at most one per day
+  - after: 2 weeks # after two weeks, discard everything
+    sample: none
+
 # Backups. Each backup in this list defines a collection of related backups,
 # identified by a base name. Tarsnap requires unique names, so snapback appends
 # a timestamp like ".20190315-1845" to generate an archive name. You may have
@@ -102,6 +113,14 @@ backup:
     sample: all      # keep everything in this interval
   - after: 10 days
 	sample: 1/month
+
+- name: downloads
+  include: [Downloads]
+  policy: short      # use the "short" expiration policy
+
+- name: programs
+  policy: default    # use the default policy (explicitly)
+  include: [/usr/local/bin]
 ```
 
 [ts]: https://www.tarsnap.com/
