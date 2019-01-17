@@ -300,11 +300,13 @@ func printSizes(cfg *config.Config, as []tarsnap.Archive) {
 }
 
 func createBackups(cfg *config.Config) error {
-	tag := "." + time.Now().Format("20060102-1504")
+	ts := time.Now()
+	tag := "." + ts.Format("20060102-1504")
 	nerrs := 0
 	for _, b := range cfg.Backup {
 		opts := b.CreateOptions
 		opts.DryRun = *doDryRun
+		opts.CreationTime = ts
 		name := b.Name + tag
 		if err := cfg.Config.Create(name, opts); err != nil {
 			log.Printf("ERROR: %s: %v", name, err)
