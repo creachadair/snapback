@@ -180,7 +180,8 @@ func effectiveNow() time.Time {
 }
 
 func pruneArchives(cfg *config.Config, as []tarsnap.Archive) {
-	now := effectiveNow()
+	start := time.Now()   // actual time, for operation latency
+	now := effectiveNow() // effective time, for timestamp assignment
 	chosen := as
 	if flag.NArg() != 0 {
 		chosen = nil
@@ -204,6 +205,7 @@ func pruneArchives(cfg *config.Config, as []tarsnap.Archive) {
 	} else if err := cfg.Config.Delete(prune...); err != nil {
 		log.Fatalf("Deleting archives: %v", err)
 	}
+	log.Printf("Pruning finished [%v elapsed]", time.Since(start).Round(time.Second))
 	fmt.Println(strings.Join(prune, "\n"))
 }
 
