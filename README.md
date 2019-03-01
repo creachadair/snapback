@@ -165,22 +165,18 @@ policy. The rule with the earliest, narrowest span that contains an archive
 governs its expiration. For example, suppose an archive X was created 7 days
 ago and we have three rules:
 
-```
+```yaml
 # Rule 1
-after: 1 day
-before: 10 days
+{after: 1 day, before: 10 days}
 
 # Rule 2
-after: 4 days
-before: 8 days
+{after: 4 days, before: 8 days}
 
 # Rule 3
-after: 5 days
-before: 9 days
+{after: 5 days, before: 9 days}
 
 # Rule 4
-after: 3 days
-before: 6 days
+{after: 3 days, before: 6 days}
 ```
 
 Then X is governed by Rule 2. Rule 4 is inapplicable because it does not span
