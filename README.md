@@ -123,6 +123,72 @@ backup:
   include: [/usr/local/bin]
 ```
 
+### Expiration Policies
+
+An expiration policy is a list of rules that specify which archives should be
+kept or discarded based on their time of creation. Each rule specifies a span
+of time, a number of unconditional snapshots, and a sampling rate. In a config
+file this looks like:
+
+```
+after:  <interval>
+before: <interval>
+latest: <count>
+sample: <count>/<interval>  # or "all" or "none"
+```
+
+An `<interval>` is a string specifying a time interval, consisting of a number
+and a unit, e.g., `1 week`, `2.5 days`, `3 months`. Fractions are allowed. For
+purposes of this tool, a "day" is defined as 24 hours and a "year" as 365.25
+days, and a "month" as 1/12 of a year or 30.4 days. The units understood are
+seconds, hours, days, weeks, months, and years, and each of these may be
+abbreviated to a single letter, e.g., `2w`, `15.2h`.
+
+The `after` and `before` fields define a span of time before the present
+moment, for example `after: 1 week` and `before: 1 month` covers the range of
+time between 1 week and 1 month ago. An archive is _eligible_ for a rule if its
+creation time falls within the rule span. If both fields are 0 (or not set),
+the rule spans all time.
+
+The `latest` field specifies a number of most-recently created archives within
+the rule span that should be retained unconditionally, regardless of age.
+
+The `sample` field specifies a sampling rule that selects up to `<count>`
+archives from each `<interval>` of time, evenly spaced throughout the rule's
+span. If `sample` is not set, or is set to `none`, no samples are retained; if
+`sample` is `all` every archive in the span is retained.
+
+#### Rule Selection
+
+Expiration is determined by evaluating each archive against the rules in the
+policy. The rule with the earliest, narrowest span that contains an archive
+governs its expiration. For example, suppose an archive X was created 7 days
+ago and we have three rules:
+
+```
+# Rule 1
+after: 1 day
+before: 10 days
+
+# Rule 2
+after: 4 days
+before: 8 days
+
+# Rule 3
+after: 5 days
+before: 9 days
+
+# Rule 4
+after: 3 days
+before: 6 days
+```
+
+Then X is governed by Rule 2. Rule 4 is inapplicable because it does not span
+the creation time of X. Rules 2 and 3 are preferable to Rule 1 because their
+spans are only 4 days, whereas Rule 1 spans 9 days. Rule 2 is preferable to
+Rule 3 because it starts earlier (4 days vs. 5 days).
+
+
 [ts]: https://www.tarsnap.com/
 [tsdl]: https://www.tarsnap.com/download.html
 [godl]: https://golang.org/doc/install

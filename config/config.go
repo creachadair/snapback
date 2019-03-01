@@ -155,7 +155,7 @@ func (c *Config) logf(msg string, args ...interface{}) {
 //    R(min=3d, max=6d)
 //
 // Archive X will be governed by policy Q. R is ineligible because it does not
-// span the creation time of X, and Q is preferable to P because Q is only 3
+// span the creation time of X, and Q is preferable to P because Q is only 4
 // days wide whereas P is 9 days wide.
 //
 // A policy with a max value of 0 is assumed to end at time +∞.
