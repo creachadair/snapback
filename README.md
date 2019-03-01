@@ -125,6 +125,9 @@ backup:
 
 ### Expiration Policies
 
+Running `snapback -prune` removes archives that have "expired" according to a
+policy defined in the configuration file.
+
 An expiration policy is a list of rules that specify which archives should be
 kept or discarded based on their time of creation. Each rule specifies a span
 of time, a number of unconditional snapshots, and a sampling rate. In a config
