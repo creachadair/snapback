@@ -130,7 +130,7 @@ kept or discarded based on their time of creation. Each rule specifies a span
 of time, a number of unconditional snapshots, and a sampling rate. In a config
 file this looks like:
 
-```
+```yaml
 after:  <interval>
 before: <interval>
 latest: <count>
@@ -163,7 +163,7 @@ span. If `sample` is not set, or is set to `none`, no samples are retained; if
 Expiration is determined by evaluating each archive against the rules in the
 policy. The rule with the earliest, narrowest span that contains an archive
 governs its expiration. For example, suppose an archive X was created 7 days
-ago and we have three rules:
+ago and we have these rules:
 
 ```yaml
 # Rule 1
