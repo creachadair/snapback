@@ -188,6 +188,16 @@ the creation time of X. Rules 2 and 3 are preferable to Rule 1 because their
 spans are only 4 days, whereas Rule 1 spans 9 days. Rule 2 is preferable to
 Rule 3 because it starts earlier (4 days vs. 5 days).
 
+#### Rule Application
+
+Expiration is performed separately for each backup set. If a backup set does
+not have an expiration policy, all archives in that set are retained
+unconditionally. Otherwise, any archive _not_ selected by its governing rule is
+marked for expiration. Any archive that has no applicable rules is retained
+unconditionally.
+
+You can view a log of the rule evaluation without effecting any actual changes
+by invoking `snapback -prune -dry-run`.
 
 [ts]: https://www.tarsnap.com/
 [tsdl]: https://www.tarsnap.com/download.html
