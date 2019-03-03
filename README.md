@@ -149,9 +149,9 @@ abbreviated to a single letter, e.g., `2w`, `15.2h`.
 
 The `after` and `before` fields define a span of time before the present
 moment, for example `after: 1 week` and `before: 1 month` covers the range of
-time between 1 week and 1 month ago. An archive is _eligible_ for a rule if its
-creation time falls within the rule span. If both fields are 0 (or not set),
-the rule spans all time.
+time between 1 week and 1 month ago. An rule is _applicable_ to an archive if
+the archive's creation time falls within the rule's span. If both fields are 0
+(or not set), the rule spans all time.
 
 The `latest` field specifies a number of most-recently created archives within
 the rule span that should be retained unconditionally, regardless of age.
@@ -164,9 +164,9 @@ span. If `sample` is not set, or is set to `none`, no samples are retained; if
 #### Rule Selection
 
 Expiration is determined by evaluating each archive against the rules in the
-policy. The rule with the earliest, narrowest span that contains an archive
-governs its expiration. For example, suppose an archive X was created 7 days
-ago and we have these rules:
+policy. Among the applicable rules, the rule with the earliest, narrowest span
+governs the archive's expiration. For example, suppose an archive X was created
+7 days ago and we have these rules:
 
 ```yaml
 # Rule 1
