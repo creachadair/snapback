@@ -234,7 +234,11 @@ func restoreFiles(cfg *config.Config, dir string) {
 		if strings.HasSuffix(path, "/") {
 			slow[n] = true
 		}
-		need[n] = append(need[n], bs[0].Relative)
+		need[n] = append(need[n], strings.TrimPrefix(bs[0].Relative, "/"))
+
+		// N.B.: snapback creates archives without -P, so absolute paths are
+		// trimmed by tarsnap when they are put into the archive. Removing the
+		// leading slash here ensures the query path to tarsnap matches.
 	}
 
 	// Now that we have something to restore, it's worth listing the archives.
