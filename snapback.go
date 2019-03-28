@@ -1,3 +1,5 @@
+// Copyright (C) 2018 Michael J. Fromberger. All Rights Reserved.
+
 // Program snapback creates tarsnap backups of important directories.
 package main
 

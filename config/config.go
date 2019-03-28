@@ -1,3 +1,5 @@
+// Copyright (C) 2018 Michael J. Fromberger. All Rights Reserved.
+
 // Package config describes configuration settings for the snapback tool.
 package config
 
