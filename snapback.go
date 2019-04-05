@@ -91,6 +91,18 @@ func main() {
 		ts.WorkDir = dir
 	}
 
+	// Pre-check non-flag arguments to prune, to avoid a lookup in case the user
+	// specified unknown backup sets.
+	if *doPrune {
+		s := stringset.New(flag.Args()...)
+		v := stringset.FromIndexed(len(cfg.Backup), func(i int) string {
+			return cfg.Backup[i].Name
+		})
+		if !s.IsSubset(v) {
+			log.Fatalf("Unknown backup set names for -prune: %s", s.Diff(v))
+		}
+	}
+
 	// If we need a list of existing archives, grab it.
 	var arch []tarsnap.Archive
 	if *doList || *doPrune || (*doSize && hasGlob(flag.Args())) {
