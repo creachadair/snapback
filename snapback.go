@@ -103,7 +103,9 @@ func main() {
 		}
 	}
 
-	// If we need a list of existing archives, grab it.
+	// If we need a list of existing archives, grab it.  For size calcluations
+	// we only need the full archve listing if the user has given us globs to
+	// select names from.
 	var arch []tarsnap.Archive
 	if *doList || *doPrune || (*doSize && hasGlob(flag.Args())) {
 		arch, err = ts.List()
@@ -291,9 +293,13 @@ func restoreFiles(cfg *config.Config, dir string) {
 
 func printSizes(cfg *config.Config, as []tarsnap.Archive) {
 	var names []string
+
+	// If we have no archive list, it means the command-line arguments name
+	// specific archives to size.
 	if as == nil {
 		names = flag.Args()
 	} else {
+		// Otherwise, we need to filter the archive list with flag globs.
 		for _, a := range as {
 			if matchExpr(a.Name, flag.Args()) {
 				names = append(names, a.Name)
@@ -309,13 +315,27 @@ func printSizes(cfg *config.Config, as []tarsnap.Archive) {
 	fmt.Fprintf(tw, "TOTAL\t%s raw\t%s comp\t%s uniq\t%s incr\n",
 		H(info.All.InputBytes), H(info.All.CompressedBytes),
 		H(info.All.UniqueBytes), H(info.All.CompressedUniqueBytes))
+
+	var subtotal tarsnap.Sizes
+	var numPrinted int
 	for _, name := range names {
 		size, ok := info.Archive[name]
 		if ok {
+			subtotal.InputBytes += size.InputBytes
+			subtotal.CompressedBytes += size.CompressedBytes
+			subtotal.UniqueBytes += size.UniqueBytes
+			subtotal.CompressedUniqueBytes += size.CompressedUniqueBytes
+
 			fmt.Fprintf(tw, "%s\t%s\t%s\t%s\t%s\n", name,
 				H(size.InputBytes), H(size.CompressedBytes),
 				H(size.UniqueBytes), H(size.CompressedUniqueBytes))
+			numPrinted++
 		}
+	}
+	if numPrinted > 1 {
+		fmt.Fprintf(tw, "SUBTOTAL\t%s\t%s\t%s\t%s\n",
+			H(subtotal.InputBytes), H(subtotal.CompressedBytes),
+			H(subtotal.UniqueBytes), H(subtotal.CompressedUniqueBytes))
 	}
 	tw.Flush()
 }
