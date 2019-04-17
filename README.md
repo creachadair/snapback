@@ -8,8 +8,10 @@
 To use `snapback`, you will need [tarsnap][tsdl] and [Go][godl].  Once you have these installed, run:
 
 ```shell
-$ env GO111MODULE=off go get bitbucket.org/creachadair/snapback
+$ go get bitbucket.org/creachadair/snapback
 ```
+
+If you get an error like `"cannot find main module"` prepend `env GO111MODULE=off`.
 
 Provided you have `$GOPATH/bin` in your `$PATH` environment, you should be able to verify that things are working by running:
 
