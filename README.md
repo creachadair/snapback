@@ -38,7 +38,7 @@ For a summary of options, run `snapback -help`. For each of the commands shown h
 
 ## Configuration
 
-The default configuration file is `$HOME/.snapback`, or you can use the `-config` flag to pick a different file. The file is in [YAML][yaml] format. The following example illustrates the available settings:
+The default configuration file is `$HOME/.snapback`, or you can use the `-config` flag to pick a different file. The file is in [YAML][yaml] format and encodes a [`Config`](https://godoc.org/bitbucket.org/creachadair/snapback/config#Config) struct. The following example illustrates the available settings:
 
 ```yaml
 # Example snapback configuration file.
