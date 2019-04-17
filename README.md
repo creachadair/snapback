@@ -121,8 +121,12 @@ backup:
   policy: short      # use the "short" expiration policy
 
 - name: programs
-  policy: default    # use the default policy (explicitly)
+  policy: default    # use the default expiration policy (explicitly)
   include: [/usr/local/bin]
+
+- name: games
+  include: [/Applications/Games]
+                     # use the default expiration policy (implicitly)
 ```
 
 ### Expiration Policies
