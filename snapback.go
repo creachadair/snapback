@@ -8,6 +8,7 @@ import (
 	"fmt"
 	"log"
 	"os"
+	"os/exec"
 	"path/filepath"
 	"strconv"
 	"strings"
@@ -21,6 +22,8 @@ import (
 	"bitbucket.org/creachadair/tarsnap"
 )
 
+const toolPackage = "bitbucket.org/creachadair/snapback"
+
 func init() {
 	flag.Usage = func() {
 		fmt.Fprintf(os.Stderr, `Usage: %[1]s -find <path>... # find files in backups
@@ -28,6 +31,7 @@ func init() {
        %[1]s -prune          # clean up old backups
        %[1]s -restore <dir>  # restore files or directories to <dir>
        %[1]s -size           # show sizes of stored data
+       %[1]s -update         # update the tool from the network
        %[1]s [-v]            # create new backups
 
 Create tarsnap backups of important directories. With the -v flag, the
@@ -68,6 +72,7 @@ var (
 	doRestore  = flag.String("restore", "", "Restore files to this directory")
 	doSize     = flag.Bool("size", false, "Print size statistics")
 	doDryRun   = flag.Bool("dry-run", false, "Simulate creating or deleting archives")
+	doUpdate   = flag.Bool("update", false, "Update the tool from the network")
 	doVerbose  = flag.Bool("v", false, "Verbose logging")
 	snapTime   = flag.String("now", "", "Effective current time (2006-01-02T15:04:05; default is wallclock time)")
 )
@@ -75,6 +80,10 @@ var (
 func main() {
 	flag.Parse()
 
+	if *doUpdate {
+		checkUpdate()
+		return
+	}
 	dir, cfg, err := loadConfig(*configFile)
 	if err != nil {
 		log.Fatalf("Loading configuration: %v", err)
@@ -360,6 +369,17 @@ func createBackups(cfg *config.Config) error {
 		return fmt.Errorf("%d errors", nerrs)
 	}
 	return nil
+}
+
+func checkUpdate() {
+	fmt.Fprintf(os.Stderr, "-- Updating %s from the network\n", toolPackage)
+	cmd := exec.Command("go", "get", "-u", toolPackage)
+	cmd.Dir = os.TempDir()
+	cmd.Env = append(os.Environ(), "GO111MODULE=on")
+	if _, err := cmd.Output(); err != nil {
+		log.Fatalf("Updating %q failed: %v", toolPackage, err)
+	}
+	fmt.Fprintln(os.Stderr, "<done>")
 }
 
 func matchExpr(name string, exprs []string) bool {
