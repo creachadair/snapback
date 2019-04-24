@@ -8,16 +8,22 @@
 To use `snapback`, you will need [tarsnap][tsdl] and [Go][godl].  Once you have these installed, run:
 
 ```shell
-$ go get bitbucket.org/creachadair/snapback
+$ (cd /tmp; go get bitbucket.org/creachadair/snapback)
 ```
-
-If you get an error like `"cannot find main module"` prepend `env GO111MODULE=off`.
 
 Provided you have `$GOPATH/bin` in your `$PATH` environment, you should be able to verify that things are working by running:
 
 ```shell
 $ snapback -help
 ```
+
+To update the version you have installed to the latest from GitHub, run `snapback -update`, or manually invoke
+
+```shell
+$ (cd /tmp; go get -u bitbucket.org/creachadair/snapback)
+```
+
+which is what the `-update` flag does.
 
 ## Quick Reference
 
