@@ -316,10 +316,6 @@ func sortExp(es []*Policy) {
 // permitted, and results are rounded toward zero.
 type Interval int64
 
-func (iv Interval) timeDuration() time.Duration {
-	return time.Duration(iv) * time.Second
-}
-
 // UnmarshalYAML decodes an interval from a string in the format accepted by
 // parseInterval.
 func (iv *Interval) UnmarshalYAML(unmarshal func(interface{}) error) error {
