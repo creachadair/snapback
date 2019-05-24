@@ -1,7 +1,7 @@
 module bitbucket.org/creachadair/snapback
 
 require (
-	bitbucket.org/creachadair/shell v0.0.4
+	bitbucket.org/creachadair/shell v0.0.5
 	bitbucket.org/creachadair/stringset v0.0.5
 	bitbucket.org/creachadair/tarsnap v0.0.15
 	github.com/kr/pretty v0.1.0 // indirect
