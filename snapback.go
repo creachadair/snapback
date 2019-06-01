@@ -160,7 +160,11 @@ func findArchives(cfg *config.Config, _ []tarsnap.Archive) {
 	}
 	tw := tabwriter.NewWriter(os.Stdout, 0, 8, 3, ' ', 0)
 	for _, path := range flag.Args() {
-		bs := cfg.FindPath(path)
+		abs, err := filepath.Abs(path)
+		if err != nil {
+			log.Fatalf("Unable to resolve %q: %v", path, err)
+		}
+		bs := cfg.FindPath(abs)
 		for _, b := range bs {
 			fmt.Fprint(tw, b.Relative, "\t", b.Backup.Name, "\n")
 		}
@@ -247,7 +251,11 @@ func restoreFiles(cfg *config.Config, dir string) {
 	need := make(map[string][]string) // :: base → paths
 	slow := make(map[string]bool)     // :: base → slow read necessary
 	for _, path := range flag.Args() {
-		bs := cfg.FindPath(path)
+		abs, err := filepath.Abs(path)
+		if err != nil {
+			log.Fatalf("Unable to resolve %q: %v", path, err)
+		}
+		bs := cfg.FindPath(abs)
 		if len(bs) == 0 {
 			log.Fatalf("No backups found for %q", path)
 		} else if len(bs) > 1 {
