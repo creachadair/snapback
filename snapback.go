@@ -64,7 +64,9 @@ Options:
 }
 
 var (
-	configFile = flag.String("config", "$HOME/.snapback", "Configuration file")
+	defaultConfig = "$HOME/.snapback"
+
+	configFile = flag.String("config", defaultConfig, "Configuration file")
 	outFormat  = flag.String("format", "", "Output format (Go template)")
 	doFind     = flag.Bool("find", false, "Find backups containing the specified paths")
 	doList     = flag.Bool("list", false, "List known archives")
