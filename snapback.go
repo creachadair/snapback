@@ -1,6 +1,9 @@
 // Copyright (C) 2018 Michael J. Fromberger. All Rights Reserved.
 
-// Program snapback creates tarsnap backups of important directories.
+// Program snapback is a wrapper around the tarsnap command-line tool that
+// makes it easier to create and manage backups of important directories.
+//
+// For more information about tarsnap, see http://www.tarsnap.com.
 package main
 
 import (
