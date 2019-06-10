@@ -6,7 +6,7 @@ import (
 	"strings"
 	"testing"
 
-	"bitbucket.org/creachadair/tarsnap"
+	"github.com/creachadair/tarsnap"
 )
 
 func TestPolicyOrder(t *testing.T) {

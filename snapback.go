@@ -20,12 +20,12 @@ import (
 	"time"
 
 	"bitbucket.org/creachadair/shell"
-	"bitbucket.org/creachadair/snapback/config"
 	"bitbucket.org/creachadair/stringset"
-	"bitbucket.org/creachadair/tarsnap"
+	"github.com/creachadair/snapback/config"
+	"github.com/creachadair/tarsnap"
 )
 
-const toolPackage = "bitbucket.org/creachadair/snapback"
+const toolPackage = "github.com/creachadair/snapback"
 
 func init() {
 	flag.Usage = func() {

@@ -2,8 +2,8 @@ bitbucket.org/creachadair/shell v0.0.5 h1:OZvECJl/+hhmLskrBOrodFr4mhpH7C/UO5zEWG
 bitbucket.org/creachadair/shell v0.0.5/go.mod h1:8Qqi/cYk7vPnsOePHroKXDJYmb5x7ENhtiFtfZq8K+M=
 bitbucket.org/creachadair/stringset v0.0.5 h1:30tjoubbPMW4WDfObeby7U00dLvKBRVRyoz4kPEEICI=
 bitbucket.org/creachadair/stringset v0.0.5/go.mod h1:Sh09n+mAanyIbrkX0MICAEZcqXVbuFi8L0P/dbrhH2A=
-bitbucket.org/creachadair/tarsnap v0.0.16 h1:biLW0U38C8UJjZcl5NOLOglLB7guRS0QXApib/YLNhE=
-bitbucket.org/creachadair/tarsnap v0.0.16/go.mod h1:nE2EDea+dz1Ykh9zVEE168AiuAe+drT3pyYI+f7NzWc=
+github.com/creachadair/tarsnap v0.0.17 h1:22IIg+z3WaRiBJDpqzqKlG6ZW1SGiUjZNMPElQT2iJg=
+github.com/creachadair/tarsnap v0.0.17/go.mod h1:y6uJ4Ng7N0n8FQr05tZ4mXKTbIG2myjFtTiI/DlwlfY=
 github.com/google/go-cmp v0.3.0 h1:crn/baboCvb5fXaQ0IJ1SGTsTVrWpDsCWC8EGETZijY=
 github.com/google/go-cmp v0.3.0/go.mod h1:8QqcDgzrUqlUb/G2PQTWiueGozuR1884gddMywk6iLU=
 github.com/kr/pretty v0.1.0 h1:L/CwN0zerZDmRFUapSPitk6f+Q3+0za1rQkzVuMiMFI=

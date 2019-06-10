@@ -8,7 +8,7 @@
 To use `snapback`, you will need [tarsnap][tsdl] and [Go][godl].  Once you have these installed, run:
 
 ```shell
-$ (cd /tmp; go get bitbucket.org/creachadair/snapback)
+$ (cd /tmp; go get github.com/creachadair/snapback)
 ```
 
 Provided you have `$GOPATH/bin` in your `$PATH` environment, you should be able to verify that things are working by running:
@@ -20,7 +20,7 @@ $ snapback -help
 To update the version you have installed to the latest from GitHub, run `snapback -update`, or manually invoke
 
 ```shell
-$ (cd /tmp; go get -u bitbucket.org/creachadair/snapback)
+$ (cd /tmp; go get -u github.com/creachadair/snapback)
 ```
 
 which is what the `-update` flag does.
@@ -44,7 +44,7 @@ For a summary of options, run `snapback -help`. For each of the commands shown h
 
 ## Configuration
 
-The default configuration file is `$HOME/.snapback`, or you can use the `-config` flag to pick a different file. The file is in [YAML][yaml] format and encodes a [`Config`](https://godoc.org/bitbucket.org/creachadair/snapback/config#Config) struct. The following example illustrates the available settings:
+The default configuration file is `$HOME/.snapback`, or you can use the `-config` flag to pick a different file. The file is in [YAML][yaml] format and encodes a [`Config`](https://godoc.org/github.com/creachadair/snapback/config#Config) struct. The following example illustrates the available settings:
 
 ```yaml
 # Example snapback configuration file.

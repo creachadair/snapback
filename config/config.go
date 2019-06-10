@@ -15,7 +15,7 @@ import (
 	"strings"
 	"time"
 
-	"bitbucket.org/creachadair/tarsnap"
+	"github.com/creachadair/tarsnap"
 	yaml "gopkg.in/yaml.v2"
 )
 
