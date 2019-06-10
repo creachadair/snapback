@@ -120,7 +120,7 @@ backup:
   - until: 10 days
     sample: all      # keep everything in this interval
   - after: 10 days
-	sample: 1/month
+    sample: 1/month
 
 - name: downloads
   include: [Downloads]
