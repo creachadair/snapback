@@ -54,7 +54,10 @@ func compile(pat string) string {
 	if star {
 		cmp.WriteString(`[^/]*`)
 	}
-	cmp.WriteRune('$')
+
+	// The pattern must match a complete directory name, but need not consume
+	// the rest of the path.
+	cmp.WriteString(`(?:/|$)`)
 	return cmp.String()
 }
 

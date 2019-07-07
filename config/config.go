@@ -295,20 +295,27 @@ func Parse(r io.Reader) (*Config, error) {
 func expand(s *string) { *s = os.ExpandEnv(*s) }
 
 func expandGlobs(b *Backup, wd string) {
+	base := b.WorkDir
+	if base == "" {
+		base = wd
+	}
 	vpath := func(inc string) string {
 		if filepath.IsAbs(inc) {
 			return inc
-		} else if b.WorkDir != "" {
-			return filepath.Join(b.WorkDir, inc)
 		}
-		return filepath.Join(wd, inc)
+		return filepath.Join(base, inc)
 	}
 
 	var paths []string
 	for _, inc := range b.Include {
 		path := vpath(inc)
 		matches, _ := filepath.Glob(path)
-		paths = append(paths, matches...)
+		for _, match := range matches {
+			if t := strings.TrimPrefix(match, base+"/"); t != match {
+				match = t
+			}
+			paths = append(paths, match)
+		}
 	}
 	b.Include = paths
 }
