@@ -9,6 +9,7 @@ import (
 	"io"
 	"log"
 	"os"
+	"path/filepath"
 	"regexp"
 	"sort"
 	"strconv"
@@ -252,6 +253,9 @@ type Backup struct {
 	// Named expiration policy (ignored if Expiration is set).
 	Policy string
 
+	// Expand shell globs in included paths.
+	GlobIncludes bool `json:"globIncludes" yaml:"glob-includes"`
+
 	// The archive creation options for this backup.
 	tarsnap.CreateOptions `yaml:",inline"`
 }
@@ -264,6 +268,10 @@ func Parse(r io.Reader) (*Config, error) {
 	if err := dec.Decode(&cfg); err != nil {
 		return nil, err
 	}
+	sortExp(cfg.Expiration)
+	expand(&cfg.Keyfile)
+	expand(&cfg.WorkDir)
+
 	seen := make(map[string]bool)
 	for _, b := range cfg.Backup {
 		if b.Name == "" {
@@ -274,17 +282,36 @@ func Parse(r io.Reader) (*Config, error) {
 		seen[b.Name] = true
 		sortExp(b.Expiration)
 		expand(&b.WorkDir)
+		if b.GlobIncludes {
+			expandGlobs(b, cfg.WorkDir)
+		}
 	}
 	for _, named := range cfg.Policy {
 		sortExp(named)
 	}
-	sortExp(cfg.Expiration)
-	expand(&cfg.Keyfile)
-	expand(&cfg.WorkDir)
 	return &cfg, nil
 }
 
 func expand(s *string) { *s = os.ExpandEnv(*s) }
+
+func expandGlobs(b *Backup, wd string) {
+	vpath := func(inc string) string {
+		if filepath.IsAbs(inc) {
+			return inc
+		} else if b.WorkDir != "" {
+			return filepath.Join(b.WorkDir, inc)
+		}
+		return filepath.Join(wd, inc)
+	}
+
+	var paths []string
+	for _, inc := range b.Include {
+		path := vpath(inc)
+		matches, _ := filepath.Glob(path)
+		paths = append(paths, matches...)
+	}
+	b.Include = paths
+}
 
 const forever = 1<<63 - 1
 
