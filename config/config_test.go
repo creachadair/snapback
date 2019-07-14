@@ -136,3 +136,31 @@ func TestFindPath(t *testing.T) {
 		}
 	}
 }
+
+func TestFindSet(t *testing.T) {
+	cfg := &Config{
+		Backup: []*Backup{
+			{Name: "important"},
+			{Name: "ancillary"},
+			{Name: "miscellaneous"},
+		},
+	}
+	tests := []struct {
+		name string
+		ok   bool
+	}{
+		{"", false},
+		{"important", true},
+		{"stupid", false},
+		{"ancillary", true},
+		{"MISCELLANEOUS", false},
+	}
+	for _, test := range tests {
+		got := cfg.FindSet(test.name)
+		if ok := (got != nil); ok != test.ok {
+			t.Errorf("FindSet(%q): found %v, want %v", test.name, ok, test.ok)
+		} else if test.ok && got.Name != test.name {
+			t.Errorf("FindSet(%[1]q): got name %q, want %[1]q", test.name, got.Name)
+		}
+	}
+}

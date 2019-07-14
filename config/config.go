@@ -78,6 +78,16 @@ func (c *Config) FindPath(path string) []BackupPath {
 	return out
 }
 
+// FindSet returns the backup matching name, or nil if none matches.
+func (c *Config) FindSet(name string) *Backup {
+	for _, b := range c.Backup {
+		if b.Name == name {
+			return b
+		}
+	}
+	return nil
+}
+
 // findPolicy returns the expiration rules for this backup. If it does not have
 // any of its own, use the defaults. If there are no defaults, nothing expires.
 func (c *Config) findPolicy(b *Backup) []*Policy {
