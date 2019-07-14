@@ -149,7 +149,7 @@ func (c *Config) List() (tarsnap.Archives, error) {
 func (c *Config) InvalidateListCache() {
 	c.cachedList = nil
 	if c.ListCache != "" {
-		os.Remove(c.ListCache)
+		os.Truncate(c.ListCache, 0)
 	}
 }
 
