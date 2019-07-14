@@ -40,6 +40,7 @@ type Config struct {
 
 	// Cache archive listings in this file.
 	ListCache  string `json:"listCache" yaml:"list-cache"`
+	cacheTag   string
 	cachedList tarsnap.Archives
 
 	// Configuration settings for the tarsnap tool.
@@ -97,41 +98,56 @@ func (c *Config) FindSet(name string) *Backup {
 // available and updating the cache if necessary. The resulting slice is
 // ordered nondecreasing by creation time and by name.
 func (c *Config) List() (tarsnap.Archives, error) {
-	if c.cachedList != nil {
+	// Check whether the in-memory cache is valid.
+	ctag, err := c.Config.CacheTag()
+	isValid := err == nil && ctag == c.cacheTag && c.cachedList != nil
+	c.logf("Cache tag: %q, memory cache valid: %v", ctag, isValid)
+
+	if isValid {
 		return c.cachedList, nil // return cached data
 	} else if c.ListCache == "" {
-		return c.Config.List() // no cache is defined
+		return c.Config.List() // no list cache is defined
 	}
 
 	// At this point we have a cache file and no listing is loaded.
-	var cached tarsnap.Archives
+	type cacheFile struct {
+		T string           `json:"cacheTag"`
+		A tarsnap.Archives `json:"archiveList"`
+	}
+	var cf cacheFile
 	data, err := ioutil.ReadFile(c.ListCache)
 	if err == nil {
-		err = json.Unmarshal(data, &cached)
+		err = json.Unmarshal(data, &cf)
+		isValid = err == nil && cf.T == ctag
 
-		// Successful cache load. Since we loaded these from outside, verify that
-		// the order is correct.
-		if err == nil {
-			sort.Sort(cached)
-			c.cachedList = cached
-			return cached, nil
+		// If we successfully loaded the cache and the tag is still valid, sort
+		// the data to ensure correct order and update the cache.
+		if isValid {
+			c.logf("Loaded %d archives from list cache", len(cf.A))
+			sort.Sort(cf.A)
+			c.cacheTag = cf.T
+			c.cachedList = cf.A
+			return cf.A, nil
 		}
+		c.logf("List cache tag: %q, stored cache is invalid", cf.T)
 	}
 
 	// An error at this point means either we couldn't find the cache file, or
 	// that its contents were invalid. In either case, re-fetch the real list.
-	if err != nil {
-		cached, err = c.Config.List()
+	if !isValid {
+		cf.A, err = c.Config.List()
 
 		// Fetching failed; nothing more we can do here.
 		if err != nil {
 			return nil, err
 		}
+		c.logf("Loaded %d archives from tarsnap", len(cf.A))
 	}
 
 	// At this point we have a new listing that needs saved. If that fails we'll
 	// log it but otherwise not complain.
-	if bits, err := json.Marshal(cached); err != nil {
+	cf.T = ctag
+	if bits, err := json.Marshal(&cf); err != nil {
 		log.Printf("[warning] Encoding cache listing: %v", err)
 	} else if err := os.MkdirAll(filepath.Dir(c.ListCache), 0700); err != nil {
 		log.Printf("[warning] Creating list cache directory: %v", err)
@@ -139,18 +155,9 @@ func (c *Config) List() (tarsnap.Archives, error) {
 		log.Printf("[warning] Writing cache file: %v", err)
 	}
 
-	c.cachedList = cached
-	return cached, nil
-}
-
-// InvalidateListCache marks the cached list data as invalid, forcing an update
-// the next time a listing is required. The caller is responsible to call this
-// method when needed.
-func (c *Config) InvalidateListCache() {
-	c.cachedList = nil
-	if c.ListCache != "" {
-		os.Truncate(c.ListCache, 0)
-	}
+	c.cacheTag = ctag
+	c.cachedList = cf.A
+	return cf.A, nil
 }
 
 // findPolicy returns the expiration rules for this backup. If it does not have
