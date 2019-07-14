@@ -4,15 +4,19 @@
 package config
 
 import (
+	"encoding/json"
 	"errors"
 	"fmt"
 	"io"
+	"io/ioutil"
 	"log"
 	"os"
 	"path/filepath"
+	"sort"
 	"strings"
 	"time"
 
+	"github.com/creachadair/atomicfile"
 	"github.com/creachadair/tarsnap"
 	yaml "gopkg.in/yaml.v2"
 )
@@ -33,6 +37,10 @@ type Config struct {
 
 	// Enable verbose logging.
 	Verbose bool
+
+	// Cache archive listings in this file.
+	ListCache  string `json:"listCache" yaml:"list-cache"`
+	cachedList tarsnap.Archives
 
 	// Configuration settings for the tarsnap tool.
 	tarsnap.Config `yaml:",inline"`
@@ -83,6 +91,66 @@ func (c *Config) FindSet(name string) *Backup {
 		}
 	}
 	return nil
+}
+
+// List returns a list of the known archives, using a cached copy if one is
+// available and updating the cache if necessary. The resulting slice is
+// ordered nondecreasing by creation time and by name.
+func (c *Config) List() (tarsnap.Archives, error) {
+	if c.cachedList != nil {
+		return c.cachedList, nil // return cached data
+	} else if c.ListCache == "" {
+		return c.Config.List() // no cache is defined
+	}
+
+	// At this point we have a cache file and no listing is loaded.
+	var cached tarsnap.Archives
+	data, err := ioutil.ReadFile(c.ListCache)
+	if err == nil {
+		err = json.Unmarshal(data, &cached)
+
+		// Successful cache load. Since we loaded these from outside, verify that
+		// the order is correct.
+		if err == nil {
+			sort.Sort(cached)
+			c.cachedList = cached
+			return cached, nil
+		}
+	}
+
+	// An error at this point means either we couldn't find the cache file, or
+	// that its contents were invalid. In either case, re-fetch the real list.
+	if err != nil {
+		cached, err = c.Config.List()
+
+		// Fetching failed; nothing more we can do here.
+		if err != nil {
+			return nil, err
+		}
+	}
+
+	// At this point we have a new listing that needs saved. If that fails we'll
+	// log it but otherwise not complain.
+	if bits, err := json.Marshal(cached); err != nil {
+		log.Printf("[warning] Encoding cache listing: %v", err)
+	} else if err := os.MkdirAll(filepath.Dir(c.ListCache), 0700); err != nil {
+		log.Printf("[warning] Creating list cache directory: %v", err)
+	} else if err := atomicfile.WriteData(c.ListCache, bits, 0600); err != nil {
+		log.Printf("[warning] Writing cache file: %v", err)
+	}
+
+	c.cachedList = cached
+	return cached, nil
+}
+
+// InvalidateListCache marks the cached list data as invalid, forcing an update
+// the next time a listing is required. The caller is responsible to call this
+// method when needed.
+func (c *Config) InvalidateListCache() {
+	c.cachedList = nil
+	if c.ListCache != "" {
+		os.Remove(c.ListCache)
+	}
 }
 
 // findPolicy returns the expiration rules for this backup. If it does not have
@@ -182,6 +250,7 @@ func Parse(r io.Reader) (*Config, error) {
 	sortExp(cfg.Expiration)
 	expand(&cfg.Keyfile)
 	expand(&cfg.WorkDir)
+	expand(&cfg.ListCache)
 
 	seen := make(map[string]bool)
 	for _, b := range cfg.Backup {
