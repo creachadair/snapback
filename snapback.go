@@ -124,7 +124,7 @@ func main() {
 	// select names from.
 	var arch []tarsnap.Archive
 	if *doList || *doPrune || (*doSize && hasGlob(flag.Args())) {
-		arch, err = ts.List()
+		arch, err = cfg.List()
 		if err != nil {
 			log.Fatalf("Listing archives: %v", err)
 		}
@@ -283,7 +283,7 @@ func restoreFiles(cfg *config.Config, dir string) {
 
 	// Now that we have something to restore, it's worth listing the archives.
 	fmt.Fprintln(os.Stderr, "-- Listing available archives")
-	as, err := cfg.Config.List()
+	as, err := cfg.List()
 	if err != nil {
 		log.Fatalf("Listing archives: %v", err)
 	}
