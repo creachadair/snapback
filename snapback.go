@@ -35,7 +35,8 @@ func init() {
        %[1]s -restore <dir>  # restore files or directories to <dir>
        %[1]s -size           # show sizes of stored data
        %[1]s -update         # update the tool from the network
-       %[1]s [-v]            # create new backups
+       %[1]s [-v]            # create new backups of all sets
+       %[1]s -c <name>...    # create new backups of specified sets
 
 Create tarsnap backups of important directories. With the -v flag, the
 underlying tarsnap commands will be logged to stderr. If -dry-run is true, no
@@ -71,6 +72,7 @@ var (
 
 	configFile = flag.String("config", defaultConfig, "Configuration file")
 	outFormat  = flag.String("format", "", "Output format (Go template)")
+	doCreate   = flag.Bool("c", false, "Create backups (default if no arguments are given)")
 	doFind     = flag.Bool("find", false, "Find backups containing the specified paths")
 	doList     = flag.Bool("list", false, "List known archives")
 	doPrune    = flag.Bool("prune", false, "Prune out-of-band archives")
@@ -146,12 +148,12 @@ func main() {
 	if *doSize {
 		printSizes(cfg, arch)
 		return
-	} else if flag.NArg() != 0 {
+	} else if flag.NArg() != 0 && !*doCreate {
 		log.Fatalf("Extra arguments after command: %v", flag.Args())
 	}
 
 	start := time.Now()
-	if err := createBackups(cfg); err != nil {
+	if err := createBackups(cfg, flag.Args()); err != nil {
 		log.Fatalf("Failed: %v", err)
 	}
 	log.Printf("Backups finished [%v elapsed]", time.Since(start).Round(time.Second))
@@ -362,11 +364,37 @@ func printSizes(cfg *config.Config, as []tarsnap.Archive) {
 	tw.Flush()
 }
 
-func createBackups(cfg *config.Config) error {
+func chooseBackups(cfg *config.Config, names []string) ([]*config.Backup, error) {
+	if len(names) == 0 {
+		return cfg.Backup, nil
+	}
+	seen := stringset.New()
+	var sets []*config.Backup
+	for _, name := range names {
+		if seen.Contains(name) {
+			return nil, fmt.Errorf("duplicate backup set %q", name)
+		}
+
+		set := cfg.FindSet(name)
+		if set == nil {
+			return nil, fmt.Errorf("no such backup set %q", name)
+		}
+		seen.Add(name)
+		sets = append(sets, set)
+	}
+	return sets, nil
+}
+
+func createBackups(cfg *config.Config, names []string) error {
+	sets, err := chooseBackups(cfg, names)
+	if err != nil {
+		return err
+	}
+
 	ts := time.Now()
 	tag := "." + ts.Format("20060102-1504")
 	nerrs := 0
-	for _, b := range cfg.Backup {
+	for _, b := range sets {
 		opts := b.CreateOptions
 		opts.DryRun = *doDryRun
 		opts.CreationTime = ts
