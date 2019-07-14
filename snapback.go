@@ -238,11 +238,8 @@ func pruneArchives(cfg *config.Config, as []tarsnap.Archive) {
 		return
 	} else if *doDryRun {
 		fmt.Fprintln(os.Stderr, "-- Pruning would remove these archives:")
-	} else {
-		defer cfg.InvalidateListCache()
-		if err := cfg.Config.Delete(prune...); err != nil {
-			log.Fatalf("Deleting archives: %v", err)
-		}
+	} else if err := cfg.Config.Delete(prune...); err != nil {
+		log.Fatalf("Deleting archives: %v", err)
 	}
 	log.Printf("Pruning finished [%v elapsed]", time.Since(start).Round(time.Second))
 	fmt.Println(strings.Join(prune, "\n"))
@@ -397,7 +394,6 @@ func createBackups(cfg *config.Config, names []string) error {
 	ts := time.Now()
 	tag := "." + ts.Format("20060102-1504")
 	nerrs := 0
-	defer cfg.InvalidateListCache()
 	for _, b := range sets {
 		opts := b.CreateOptions
 		opts.DryRun = *doDryRun
