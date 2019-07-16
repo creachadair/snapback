@@ -156,7 +156,9 @@ func main() {
 	if err := createBackups(cfg, flag.Args()); err != nil {
 		log.Fatalf("Failed: %v", err)
 	}
-	log.Printf("Backups finished [%v elapsed]", time.Since(start).Round(time.Second))
+	elapsed := time.Since(start).Round(time.Second)
+	cfg.List() // repair the list cache
+	log.Printf("Backups finished [%v elapsed]", elapsed)
 }
 
 func findArchives(cfg *config.Config, _ []tarsnap.Archive) {
@@ -241,7 +243,9 @@ func pruneArchives(cfg *config.Config, as []tarsnap.Archive) {
 	} else if err := cfg.Config.Delete(prune...); err != nil {
 		log.Fatalf("Deleting archives: %v", err)
 	}
-	log.Printf("Pruning finished [%v elapsed]", time.Since(start).Round(time.Second))
+	elapsed := time.Since(start).Round(time.Second)
+	cfg.List() // repair the list cache
+	log.Printf("Pruning finished [%v elapsed]", elapsed)
 	fmt.Println(strings.Join(prune, "\n"))
 }
 
