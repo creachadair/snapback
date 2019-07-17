@@ -149,7 +149,7 @@ func main() {
 		printSizes(cfg, arch)
 		return
 	} else if flag.NArg() != 0 && !*doCreate {
-		log.Fatalf("Extra arguments after command: %v", flag.Args())
+		log.Fatalf("Extra arguments after command: %v\n(use -c to back up specific sets)", flag.Args())
 	}
 
 	start := time.Now()
