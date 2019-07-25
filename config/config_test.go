@@ -7,6 +7,7 @@ import (
 	"testing"
 
 	"github.com/creachadair/tarsnap"
+	"github.com/google/go-cmp/cmp"
 )
 
 func TestPolicyOrder(t *testing.T) {
@@ -47,32 +48,53 @@ func TestPolicyAssignment(t *testing.T) {
 	}
 	tests := []struct {
 		input *Backup
-		want  int
+		want  []int
 	}{
-		// An explicit expiration.
+		// An explicit expiration with no named policy, uses only those rules.
 		{input: &Backup{
 			Expiration: []*Policy{{Latest: 3}},
-		}, want: 3},
+		}, want: []int{3}},
 
-		// Explicit overrides policy.
+		// Explicit rules extend a named policy.
 		{input: &Backup{
 			Expiration: []*Policy{{Latest: 4}},
 			Policy:     "named",
-		}, want: 4},
+		}, want: []int{2, 4}},
+
+		// The name "none" produces no policy.
+		{input: &Backup{Policy: "none"}, want: nil},
+
+		// Extending "none" works.
+		{input: &Backup{
+			Expiration: []*Policy{{Latest: 6}},
+			Policy:     "none",
+		}, want: []int{6}},
 
 		// The names "default" and "" use the default policy.
-		{input: &Backup{Policy: "default"}, want: 1},
-		{input: &Backup{Policy: ""}, want: 1},
+		{input: &Backup{Policy: "default"}, want: []int{1}},
+		{input: &Backup{Policy: ""}, want: []int{1}},
+
+		// If "default" is named explicitly, it is extended.
+		{input: &Backup{
+			Expiration: []*Policy{{Latest: 7}},
+			Policy:     "default",
+		}, want: []int{1, 7}},
 
 		// Other named policies are chosen.
-		{input: &Backup{Policy: "named"}, want: 2},
+		{input: &Backup{Policy: "named"}, want: []int{2}},
 	}
+	process := func(ps []*Policy) (zs []int) {
+		for _, p := range ps {
+			zs = append(zs, p.Latest)
+		}
+		return
+	}
+
 	for _, test := range tests {
 		p := cfg.findPolicy(test.input)
-		if len(p) == 0 {
-			t.Errorf("Policy for %+v not found", test.input)
-		} else if got, want := p[0].Latest, test.want; got != want {
-			t.Errorf("Wrong policy for %+v: got %v, want %v", test.input, got, want)
+		got := process(p)
+		if diff := cmp.Diff(got, test.want); diff != "" {
+			t.Errorf("Wrong policy for %+v: (-want, +got)\n%s", test, diff)
 		}
 	}
 }

@@ -163,12 +163,19 @@ func (c *Config) List() (tarsnap.Archives, error) {
 // findPolicy returns the expiration rules for this backup. If it does not have
 // any of its own, use the defaults. If there are no defaults, nothing expires.
 func (c *Config) findPolicy(b *Backup) []*Policy {
-	if len(b.Expiration) != 0 {
+	switch b.Policy {
+	case "none":
 		return b.Expiration
-	} else if b.Policy == "" || b.Policy == "default" {
-		return c.Expiration
+	case "":
+		if len(b.Expiration) == 0 {
+			return c.Expiration
+		}
+		return b.Expiration
+	case "default":
+		return append(c.Expiration, b.Expiration...)
+	default:
+		return append(c.Policy[b.Policy], b.Expiration...)
 	}
-	return c.Policy[b.Policy]
 }
 
 // FindExpired returns a slice of the archives in arch that are eligible for
@@ -236,7 +243,15 @@ type Backup struct {
 	// Expiration policies.
 	Expiration []*Policy
 
-	// Named expiration policy (ignored if Expiration is set).
+	// Named expiration policy. If no policy is named, any explicit rules are
+	// used and the default rules are ignored. Otherwise any explicit rules are
+	// added to the selected policy, which is:
+	//
+	// If "default", the default rules are used.
+	//
+	// If "none", an empty policy is used.
+	//
+	// Any other name uses the rules from that policy.
 	Policy string
 
 	// Expand shell globs in included paths.
