@@ -79,8 +79,9 @@ expiration:
 
 # It is also possible to have named expiration policies. A backup can
 # refer to such a policy by name (see below). If a backup has an explicit
-# expiration policy, it supersedes any named policy. The name "default"
-# is an alias for the default policy (see above).
+# expiration policy, it extends any named policy. The name "default"
+# is an alias for the default policy (see above). The name "none" means
+# an empty policy, which is extended by the backup's explicit rules.
 policy:
   short:
   - latest: 2      # keep the latest two archives of every set
