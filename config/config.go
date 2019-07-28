@@ -18,7 +18,7 @@ import (
 
 	"github.com/creachadair/atomicfile"
 	"github.com/creachadair/tarsnap"
-	yaml "gopkg.in/yaml.v2"
+	yaml "gopkg.in/yaml.v3"
 )
 
 var timeZero = time.Date(1970, 1, 1, 0, 0, 0, 0, time.UTC)
@@ -264,7 +264,7 @@ type Backup struct {
 // Parse decodes a *Config from the specified reader.
 func Parse(r io.Reader) (*Config, error) {
 	dec := yaml.NewDecoder(r)
-	dec.SetStrict(true)
+	dec.KnownFields(true)
 	var cfg Config
 	if err := dec.Decode(&cfg); err != nil {
 		return nil, err
