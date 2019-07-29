@@ -22,6 +22,7 @@ import (
 	"bitbucket.org/creachadair/shell"
 	"bitbucket.org/creachadair/stringset"
 	"github.com/creachadair/snapback/config"
+	"github.com/creachadair/staticfile"
 	"github.com/creachadair/tarsnap"
 )
 
@@ -442,7 +443,7 @@ func loadConfig(path string) (string, *config.Config, error) {
 	if err != nil {
 		return "", nil, err
 	}
-	f, err := os.Open(loc)
+	f, err := staticfile.Open(loc)
 	if err != nil {
 		return "", nil, err
 	}
