@@ -62,6 +62,12 @@ workdir: "directory path"
 # Enable verbose logging output. The default is false.
 verbose: true
 
+# When you have a lot of archives, a plain tarsnap --list can be slow.
+# If this is set, snapback caches archive metadata in this file.
+# The cache is automatically validated against tarsnap's cache and
+# updated as needed.
+list-cache: "$HOME/.config/snapback/list-cache"
+
 # Default expiration settings. These settings govern how old backups are
 # cleaned up by snapback -prune, and are used for every backup that does
 # not provide its own expiration rules.
