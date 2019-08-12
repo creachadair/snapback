@@ -26,7 +26,10 @@ import (
 	"github.com/creachadair/tarsnap"
 )
 
-const toolPackage = "github.com/creachadair/snapback"
+const (
+	toolPackage = "github.com/creachadair/snapback"
+	timeFormat  = "2006-01-02T15:04:05"
+)
 
 func init() {
 	flag.Usage = func() {
@@ -82,7 +85,7 @@ var (
 	doDryRun   = flag.Bool("dry-run", false, "Simulate creating or deleting archives")
 	doUpdate   = flag.Bool("update", false, "Update the tool from the network")
 	doVerbose  = flag.Bool("v", false, "Verbose logging")
-	snapTime   = flag.String("now", "", "Effective current time (2006-01-02T15:04:05; default is wallclock time)")
+	snapTime   = flag.String("now", "", "Effective current time ("+timeFormat+"; default is wallclock time)")
 )
 
 func main() {
@@ -209,7 +212,7 @@ func listArchives(_ *config.Config, as []tarsnap.Archive) {
 
 func effectiveNow() time.Time {
 	if *snapTime != "" {
-		et, err := time.Parse("2006-01-02T15:04:05", *snapTime)
+		et, err := time.ParseInLocation(timeFormat, *snapTime, time.Local)
 		if err != nil {
 			log.Fatalf("Invalid time %q: %v", *snapTime, err)
 		}
