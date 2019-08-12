@@ -95,7 +95,7 @@ policy:
 # as many backups as you like, but the names must not repeat.
 backup:
 - name: documents
-  workDir: "path"  # change to this directory before archiving
+  workdir: "path"  # change to this directory before archiving
   include:         # directories to include (recursively)
   - Documents
   - Desktop
@@ -104,9 +104,9 @@ backup:
   modify:
   - /^\\.//        # path modification rules (see "man tarsnap")
 
-  followSymLinks: false   # follow (true) or store (false) symlinks
-  storeAccessTime: false  # store (true) or omit (false) file access times
-  preservePaths: false    # keep (true) or trim (false) absolute paths
+  follow-symlinks:   false  # follow (true) or store (false) symlinks
+  store-access-time: false  # store (true) or omit (false) file access times
+  preserve-paths:    false  # keep (true) or trim (false) absolute paths
 
   # Each backup may have its own expiration settings, which override
   # the default settings shown above.
