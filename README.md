@@ -131,15 +131,19 @@ backup:
 
 - name: downloads
   include: [Downloads]
-  policy: short      # use the "short" expiration policy
+  policy: short      # uses the "short" expiration policy
 
 - name: programs
-  policy: default    # use the default expiration policy (explicitly)
+  policy: default    # uses the default expiration policy (explicitly)
   include: [/usr/local/bin]
 
 - name: games
-  include: [/Applications/Games]
-                     # use the default expiration policy (implicitly)
+  # The tarsnap tool does not allow globs in include paths.
+  # If you set glob-includes: true, however, snapback will preprocess
+  # include globs before invoking the tool. The default is false.
+  glob-includes: true
+  include: ["/Applications/Games/_*_/saves"]
+                     # uses the default expiration policy (implicitly)
 ```
 
 ### Expiration Policies
