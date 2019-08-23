@@ -280,6 +280,8 @@ func Parse(r io.Reader) (*Config, error) {
 			return nil, errors.New("empty backup name")
 		} else if seen[b.Name] {
 			return nil, fmt.Errorf("repeated backup name %q", b.Name)
+		} else if _, ok := cfg.Policy[b.Policy]; !ok && b.Policy != "" {
+			return nil, fmt.Errorf("undefined policy %q for backup %q", b.Policy, b.Name)
 		}
 		seen[b.Name] = true
 		sortExp(b.Expiration)
