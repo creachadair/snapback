@@ -424,6 +424,7 @@ func checkUpdate() {
 	fmt.Fprintf(os.Stderr, "-- Updating %s from the network\n", toolPackage)
 	cmd := exec.Command("go", "get", "-u", toolPackage)
 	cmd.Dir = os.TempDir()
+	logCommand(cmd.Dir, cmd.Args)
 	cmd.Env = append(os.Environ(), "GO111MODULE=on")
 	if _, err := cmd.Output(); err != nil {
 		log.Fatalf("Updating %q failed: %v", toolPackage, err)
