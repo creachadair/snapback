@@ -278,8 +278,8 @@ func restoreFiles(cfg *config.Config, dir string) {
 
 		// If possible, we'll use fast reads to avoid having to scan the whole
 		// archive.  But we can only do this if the user did not request the
-		// restoration of directories.
-		if strings.HasSuffix(path, "/") {
+		// restoration of directories or globs.
+		if strings.HasSuffix(path, "/") || isGlob(path) {
 			slow[n] = true
 		}
 		need[n] = append(need[n], strings.TrimPrefix(bs[0].Relative, "/"))
