@@ -55,6 +55,7 @@ The default configuration file is `$HOME/.snapback`, or you can use the `-config
 # unless you are using different settings for snapback runs.
 tool: "path to tarsnap"      # default: uses $PATH
 keyfile: "path to key file"  # default: uses tarsnap settings
+cachedir: "cache dir path"   # default: uses tarsnap settings
 
 # Where backups should be started from by default. The default is $HOME.
 workdir: "directory path"

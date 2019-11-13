@@ -8,8 +8,8 @@ github.com/creachadair/atomicfile v0.2.0/go.mod h1:Tvr/wsb3lQY4dj+9utcmJ7Gp6wi3L
 github.com/creachadair/staticfile v0.1.2/go.mod h1:a3qySzCIXEprDGxk6tSxSI+dBBdLzqeBOMhZ+o2d3pM=
 github.com/creachadair/staticfile v0.1.3 h1:RhyrMgi7IQn3GejgmGtFuCec58vboEMt5CH6N3ulRJk=
 github.com/creachadair/staticfile v0.1.3/go.mod h1:a3qySzCIXEprDGxk6tSxSI+dBBdLzqeBOMhZ+o2d3pM=
-github.com/creachadair/tarsnap v0.1.1 h1:VKE//HAcn34A2e2qslO94q7eV/PcMutJys4c4xaD3oI=
-github.com/creachadair/tarsnap v0.1.1/go.mod h1:pJgzPZm2YBv6HHPiU5+IF+vnnPgaI4YlmiWc4GGYm4Y=
+github.com/creachadair/tarsnap v0.1.2 h1:MhTXnF+CsdGDseHopR7MQubTU6djN4REtDlyAHtc0Wo=
+github.com/creachadair/tarsnap v0.1.2/go.mod h1:pJgzPZm2YBv6HHPiU5+IF+vnnPgaI4YlmiWc4GGYm4Y=
 github.com/google/go-cmp v0.3.1 h1:Xye71clBPdm5HgqGwUkwhbynsUJZhDbS20FvLhQ2izg=
 github.com/google/go-cmp v0.3.1/go.mod h1:8QqcDgzrUqlUb/G2PQTWiueGozuR1884gddMywk6iLU=
 github.com/kr/pretty v0.1.0 h1:L/CwN0zerZDmRFUapSPitk6f+Q3+0za1rQkzVuMiMFI=
