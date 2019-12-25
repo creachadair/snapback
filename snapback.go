@@ -33,14 +33,14 @@ const (
 
 func init() {
 	flag.Usage = func() {
-		fmt.Fprintf(os.Stderr, `Usage: %[1]s -find <path>... # find files in backups
+		fmt.Fprintf(os.Stderr, `Usage: %[1]s [-v]            # create new backups of all sets
+       %[1]s -c <name>...    # create new backups of specified sets
+       %[1]s -find <path>... # find files in backups
        %[1]s -list           # list existing backups
        %[1]s -prune          # clean up old backups
        %[1]s -restore <dir>  # restore files or directories to <dir>
        %[1]s -size           # show sizes of stored data
        %[1]s -update         # update the tool from the network
-       %[1]s [-v]            # create new backups of all sets
-       %[1]s -c <name>...    # create new backups of specified sets
 
 Create tarsnap backups of important directories. With the -v flag, the
 underlying tarsnap commands will be logged to stderr. If -dry-run is true, no
