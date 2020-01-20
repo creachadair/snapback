@@ -95,6 +95,8 @@ func containsPath(b *Backup, wd, path string) (string, bool) {
 	for _, in := range b.Include {
 		if needle == in || strings.HasPrefix(needle, in+"/") {
 			return needle, true
+		} else if b.GlobIncludes && pathMatchesPattern(needle, in) {
+			return needle, true
 		}
 	}
 	return needle, false
