@@ -105,7 +105,7 @@ func TestFindPath(t *testing.T) {
 			Name: "alpha",
 			CreateOptions: tarsnap.CreateOptions{
 				WorkDir: "/home/rooty",
-				Include: []string{"bar/baz", "frob.cc"},
+				Include: []string{"bar/baz", "frob.cc", "?/marks/*/spot"},
 				Exclude: []string{"bar/baz/nuut/**"},
 			},
 		}, {
@@ -113,6 +113,12 @@ func TestFindPath(t *testing.T) {
 			CreateOptions: tarsnap.CreateOptions{
 				Include: []string{"foo/quux", "bar/baz/frob", "bar/baz/nuut"},
 				Exclude: []string{"foo/quux/zort/em.h"},
+			},
+		}, {
+			Name:         "charlie",
+			GlobIncludes: true,
+			CreateOptions: tarsnap.CreateOptions{
+				Include: []string{"?/marks/*/spot"},
 			},
 		}},
 		Config: tarsnap.Config{
@@ -145,6 +151,10 @@ func TestFindPath(t *testing.T) {
 		// Absolute paths are relativized.
 		{"/diabolo/foo/quux/meeple", "bravo"},
 		{"/home/rooty/frob.cc", "alpha"},
+
+		// Verify that glob matching on includes is respected.
+		{"?/marks/*/spot", "alpha charlie"}, // literal match on alpha
+		{"x/marks/the/spot", "charlie"},     // glob match on charlie
 	}
 
 	for _, test := range tests {
