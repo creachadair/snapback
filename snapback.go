@@ -13,6 +13,7 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
+	"sort"
 	"strconv"
 	"strings"
 	"text/tabwriter"
@@ -328,7 +329,7 @@ func printSizes(cfg *config.Config, as []tarsnap.Archive) {
 
 	// If we have no archive list, it means the command-line arguments name
 	// specific archives to size.
-	if as == nil {
+	if len(as) == 0 {
 		names = flag.Args()
 	} else {
 		// Otherwise, we need to filter the archive list with flag globs.
@@ -337,6 +338,7 @@ func printSizes(cfg *config.Config, as []tarsnap.Archive) {
 				names = append(names, a.Name)
 			}
 		}
+		sort.Strings(names)
 	}
 
 	info, err := cfg.Config.Size(names...)
