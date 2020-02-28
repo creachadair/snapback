@@ -99,14 +99,7 @@ func (s *Sampling) String() string {
 	return fmt.Sprintf("%d/%d", s.N, s.Period)
 }
 
-// UnmarshalYAML decodes a sampling from a string of the form "n/iv".
-// As special cases, "none" is allowed as an alias for 0/iv and "all" as an
-// alias for 1/0.
-func (s *Sampling) UnmarshalYAML(unmarshal func(interface{}) error) error {
-	var raw string
-	if err := unmarshal(&raw); err != nil {
-		return err
-	}
+func (s *Sampling) parseFrom(raw string) error {
 	if raw == "none" {
 		s.N = 0
 		s.Period = 0
@@ -120,15 +113,26 @@ func (s *Sampling) UnmarshalYAML(unmarshal func(interface{}) error) error {
 	if len(ps) != 2 {
 		return fmt.Errorf("invalid sampling format: %q", s)
 	}
-	n, err := strconv.Atoi(ps[0])
+	n, err := strconv.Atoi(strings.TrimSpace(ps[0]))
 	if err != nil || n < 1 {
 		return fmt.Errorf("invalid sample count: %q", ps[0])
 	}
-	p, err := parseInterval(ps[1])
+	p, err := parseInterval(strings.TrimSpace(ps[1]))
 	if err != nil {
 		return err
 	}
 	s.N = n
 	s.Period = p
 	return nil
+}
+
+// UnmarshalYAML decodes a sampling from a string of the form "n/iv".
+// As special cases, "none" is allowed as an alias for 0/iv and "all" as an
+// alias for 1/0.
+func (s *Sampling) UnmarshalYAML(unmarshal func(interface{}) error) error {
+	var raw string
+	if err := unmarshal(&raw); err != nil {
+		return err
+	}
+	return s.parseFrom(raw)
 }

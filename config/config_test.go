@@ -196,3 +196,31 @@ func TestFindSet(t *testing.T) {
 		}
 	}
 }
+
+func TestParseSampling(t *testing.T) {
+	tests := []struct {
+		input  string
+		n      int
+		period Interval
+	}{
+		{"none", 0, 0},
+		{"all", 1, 0},
+		{"3/week", 3, Week},
+		{"20/2m", 20, 2 * Month},
+		{"1 / 3 days", 1, 3 * Day},
+		{"13 / 5.2 years", 13, Interval(5.2 * float64(Year))},
+	}
+	for _, test := range tests {
+		var got Sampling
+		if err := got.parseFrom(test.input); err != nil {
+			t.Errorf("parseFrom(%q) failed: %v", test.input, err)
+			continue
+		}
+		if diff := cmp.Diff(got, Sampling{
+			N:      test.n,
+			Period: test.period,
+		}); diff != "" {
+			t.Errorf("Invalid parse for %q: (-want, +got)\n%s", test.input, diff)
+		}
+	}
+}
