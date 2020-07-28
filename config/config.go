@@ -39,6 +39,12 @@ type Config struct {
 	ListCache  string     `json:"listCache" yaml:"list-cache"`
 	cachedList *ListCache // non-nil when populated
 
+	// Auto-prune settings.
+	AutoPrune struct {
+		Timestamp string   // timestamp file
+		Interval  Interval // 0 means every time
+	} `json:"autoPrune" yaml:"auto-prune"`
+
 	// Configuration settings for the tarsnap tool.
 	tarsnap.Config `yaml:",inline"`
 }
@@ -205,6 +211,47 @@ func (c *Config) FindExpired(arch []tarsnap.Archive, now time.Time) []tarsnap.Ar
 	return match
 }
 
+// ShouldAutoPrune reports whether an automatic prune cycle should be run at
+// the current time, according to the auto-prune settings.
+func (c *Config) ShouldAutoPrune() bool {
+	if c == nil || c.AutoPrune.Timestamp == "" {
+		return false // not enabled
+	}
+
+	// The timestamp file is an empty sentinel whose modification timestamp
+	// records the last time a pruning step was performed.
+	modTime, err := c.ensurePruneSentinel()
+	if err != nil {
+		return false
+	}
+	age := Interval(time.Since(modTime) / time.Second)
+	return age >= c.AutoPrune.Interval
+}
+
+// UpdatePruneTimestamp updates the last-pruned timestamp to the current time.
+func (c *Config) UpdatePruneTimestamp() error {
+	if c == nil || c.AutoPrune.Timestamp == "" {
+		return nil // nothing to do
+	} else if _, err := c.ensurePruneSentinel(); err != nil {
+		return err
+	}
+	now := time.Now()
+	return os.Chtimes(c.AutoPrune.Timestamp, now, now)
+}
+
+func (c *Config) ensurePruneSentinel() (time.Time, error) {
+	if err := os.MkdirAll(filepath.Dir(c.AutoPrune.Timestamp), 0700); err != nil {
+		return time.Time{}, err
+	}
+	f, err := os.OpenFile(c.AutoPrune.Timestamp, os.O_RDONLY|os.O_CREATE, 0600)
+	if err != nil {
+		return time.Time{}, err
+	}
+	fi, err := f.Stat()
+	f.Close()
+	return fi.ModTime(), err
+}
+
 func (c *Config) logf(msg string, args ...interface{}) {
 	if c.Verbose {
 		log.Printf(msg, args...)
@@ -250,6 +297,7 @@ func Parse(r io.Reader) (*Config, error) {
 	expand(&cfg.Keyfile)
 	expand(&cfg.WorkDir)
 	expand(&cfg.ListCache)
+	expand(&cfg.AutoPrune.Timestamp)
 
 	seen := make(map[string]bool)
 	for _, b := range cfg.Backup {
