@@ -163,11 +163,11 @@ func main() {
 	}
 	elapsed := time.Since(start).Round(time.Second)
 	arch, _ = cfg.List() // repair the list cache
+	log.Printf("Backups finished [%v elapsed]", elapsed)
 	if cfg.ShouldAutoPrune() {
 		fmt.Fprintln(os.Stderr, "-- Auto-pruning archives")
 		pruneArchives(cfg, arch)
 	}
-	log.Printf("Backups finished [%v elapsed]", elapsed)
 }
 
 func findArchives(cfg *config.Config, _ []tarsnap.Archive) {
