@@ -69,6 +69,13 @@ verbose: true
 # updated as needed.
 list-cache: "$HOME/.config/snapback/list-cache"
 
+# By default, archives must be manually pruned to apply the expiration
+# policies. These settings instruct the tool to automatically run a pruning
+# cycle when the last effective pruning cycle exceeds a specified age.
+auto-prune:
+  timestamp: "$HOME/.config/snapback/last-prune"
+  interval: 3 days
+
 # Default expiration settings. These settings govern how old backups are
 # cleaned up by snapback -prune, and are used for every backup that does
 # not provide its own expiration rules.
