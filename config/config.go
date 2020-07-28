@@ -215,6 +215,7 @@ func (c *Config) FindExpired(arch []tarsnap.Archive, now time.Time) []tarsnap.Ar
 // the current time, according to the auto-prune settings.
 func (c *Config) ShouldAutoPrune() bool {
 	if c == nil || c.AutoPrune.Timestamp == "" {
+		c.logf("Auto-pruning is not enabled")
 		return false // not enabled
 	}
 
@@ -225,7 +226,10 @@ func (c *Config) ShouldAutoPrune() bool {
 		return false
 	}
 	age := Interval(time.Since(modTime) / time.Second)
-	return age >= c.AutoPrune.Interval
+	autoPrune := age >= c.AutoPrune.Interval
+	c.logf("Auto-prune interval is %d; last cycle %d; auto-prune=%v",
+		c.AutoPrune.Interval, age, autoPrune)
+	return autoPrune
 }
 
 // UpdatePruneTimestamp updates the last-pruned timestamp to the current time.
