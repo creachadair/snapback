@@ -162,7 +162,11 @@ func main() {
 		log.Fatalf("Failed: %v", err)
 	}
 	elapsed := time.Since(start).Round(time.Second)
-	cfg.List() // repair the list cache
+	arch, _ = cfg.List() // repair the list cache
+	if cfg.ShouldAutoPrune() {
+		fmt.Fprintln(os.Stderr, "-- Auto-pruning archives")
+		pruneArchives(cfg, arch)
+	}
 	log.Printf("Backups finished [%v elapsed]", elapsed)
 }
 
@@ -252,6 +256,13 @@ func pruneArchives(cfg *config.Config, as []tarsnap.Archive) {
 	cfg.List() // repair the list cache
 	log.Printf("Pruning finished [%v elapsed]", elapsed)
 	fmt.Println(strings.Join(prune, "\n"))
+
+	// If we actually pruned something, update the timestamp.
+	if !*doDryRun {
+		if err := cfg.UpdatePruneTimestamp(); err != nil {
+			log.Printf("[WARNING] Unable to update prune timestamp: %v", err)
+		}
+	}
 }
 
 func restoreFiles(cfg *config.Config, dir string) {
