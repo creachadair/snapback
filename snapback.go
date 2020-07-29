@@ -124,7 +124,7 @@ func main() {
 		}
 	}
 
-	// If we need a list of existing archives, grab it.  For size calcluations
+	// If we need a list of existing archives, grab it.  For size calculations
 	// we only need the full archve listing if the user has given us globs to
 	// select names from.
 	var arch []tarsnap.Archive
