@@ -441,7 +441,7 @@ func checkUpdate() {
 	cmd := exec.Command("go", "get", "-u", toolPackage)
 	cmd.Dir = os.TempDir()
 	logCommand(cmd.Dir, cmd.Args)
-	cmd.Env = append(os.Environ(), "GO111MODULE=on")
+	cmd.Env = append(os.Environ(), "GO111MODULE=on", "GOPROXY=direct")
 	if _, err := cmd.Output(); err != nil {
 		log.Fatalf("Updating %q failed: %v", toolPackage, err)
 	}

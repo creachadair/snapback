@@ -12,7 +12,7 @@ http://godoc.org/github.com/creachadair/snapback
 To use `snapback`, you will need [tarsnap][tsdl] and [Go][godl].  Once you have these installed, run:
 
 ```shell
-$ (cd /tmp; go get github.com/creachadair/snapback)
+$ (cd "${TMPDIR:?}"; GOPROXY=direct go get github.com/creachadair/snapback)
 ```
 
 Provided you have `$GOPATH/bin` in your `$PATH` environment, you should be able to verify that things are working by running:
