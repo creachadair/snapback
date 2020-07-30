@@ -86,6 +86,7 @@ var (
 	doDryRun   = flag.Bool("dry-run", false, "Simulate creating or deleting archives")
 	doUpdate   = flag.Bool("update", false, "Update the tool from the network")
 	doVerbose  = flag.Bool("v", false, "Verbose logging")
+	doVVerbose = flag.Bool("vv", false, "Extra verbose logging")
 	snapTime   = flag.String("now", "", "Effective current time ("+timeFormat+"; default is wallclock time)")
 )
 
@@ -102,6 +103,8 @@ func main() {
 	}
 	if cfg.Verbose {
 		*doVerbose = true
+	} else if *doVVerbose {
+		cfg.Verbose = true
 	}
 	if *doPrune && *doDryRun {
 		cfg.Verbose = true
@@ -184,7 +187,7 @@ func findArchives(cfg *config.Config, _ []tarsnap.Archive) {
 		for _, b := range bs {
 			fmt.Fprint(tw, b.Relative, "\t", b.Backup.Name, "\n")
 		}
-		if len(bs) == 0 && *doVerbose {
+		if len(bs) == 0 && (*doVerbose || *doVVerbose) {
 			fmt.Fprint(tw, path, "\t", "NONE", "\n")
 		}
 	}
@@ -470,7 +473,7 @@ func loadConfig(path string) (string, *config.Config, error) {
 }
 
 func logCommand(cmd string, args []string) {
-	if *doVerbose {
+	if *doVerbose || *doVVerbose {
 		fmt.Fprintf(os.Stderr, "+ [%s] %s\n", cmd, shell.Join(args))
 	}
 }
