@@ -24,7 +24,7 @@ $ snapback -help
 To update the version you have installed to the latest from GitHub, run `snapback -update`, or manually invoke
 
 ```shell
-$ (cd /tmp; go get -u github.com/creachadair/snapback)
+$ (cd "${TMPDIR:?}"; GOPROXY=direct go get github.com/creachadair/snapback)
 ```
 
 which is what the `-update` flag does.
