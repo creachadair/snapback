@@ -56,7 +56,10 @@ type BackupPath struct {
 }
 
 // FindPath reports the backups that claim path, or nil if there are none.
-// N.B. Only the current backup set configurations are examined.
+// N.B. Only the current backup set configurations are examined, not the
+// contents of the actual backups on the service. This means that a path
+// located by FindPath may or may not be actually backed up in the matching
+// backup sets.
 func (c *Config) FindPath(path string) []BackupPath {
 	var out []BackupPath
 	for _, b := range c.Backup {
