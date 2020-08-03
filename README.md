@@ -12,7 +12,7 @@ http://godoc.org/github.com/creachadair/snapback
 To use `snapback`, you will need [tarsnap][tsdl] and [Go][godl].  Once you have these installed, run:
 
 ```shell
-$ (cd "${TMPDIR:?}"; GOPROXY=direct go get github.com/creachadair/snapback)
+$ (cd "${TMPDIR:-/tmp}"; GOPROXY=direct go get github.com/creachadair/snapback)
 ```
 
 Provided you have `$GOPATH/bin` in your `$PATH` environment, you should be able to verify that things are working by running:
@@ -24,7 +24,7 @@ $ snapback -help
 To update the version you have installed to the latest from GitHub, run `snapback -update`, or manually invoke
 
 ```shell
-$ (cd "${TMPDIR:?}"; GOPROXY=direct go get -u github.com/creachadair/snapback)
+$ (cd "${TMPDIR:-/tmp}"; GOPROXY=direct go get -u github.com/creachadair/snapback)
 ```
 
 which is what the `-update` flag does.
