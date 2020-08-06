@@ -106,9 +106,6 @@ func main() {
 	} else if *doVVerbose {
 		cfg.Verbose = true
 	}
-	if *doPrune && *doDryRun {
-		cfg.Verbose = true
-	}
 	ts := &cfg.Config
 	ts.CmdLog = logCommand
 	if ts.WorkDir == "" {

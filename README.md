@@ -231,7 +231,7 @@ marked for expiration. Any archive that has no applicable rules is retained
 unconditionally.
 
 You can view a log of the rule evaluation without effecting any actual changes
-by invoking `snapback -prune -dry-run`.
+by invoking `snapback -prune -dry-run -vv`.
 
 [ts]: https://www.tarsnap.com/
 [tsdl]: https://www.tarsnap.com/download.html
