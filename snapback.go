@@ -57,7 +57,8 @@ to list or evaluate. Globs are permitted in these arguments.
 With -prune, archives filtered by expiration policies are deleted. Non-flag
 arguments specify archive sets to evaluate for pruning. Archive ages are pruned
 based on the current time. For testing, you may override this by setting -now.
-Adding -dry-run to -prune also generates a log of the rule evaluations applied.
+Use -dry-run to show what archives would be pruned without actually doing so.
+Add -vv to log the policy rule evaluations.
 
 With -restore, the non-flag arguments specify files or directories to restore
 into the specified output directory from the most recent matching backup.
