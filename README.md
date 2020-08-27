@@ -1,7 +1,6 @@
 # snapback: A tarsnap backup tool
 
-http://godoc.org/github.com/creachadair/snapback
-
+[![GoDoc](https://img.shields.io/static/v1?label=godoc&message=reference&color=blue)](https://pkg.go.dev/github.com/creachadair/snapback)
 [![Go Report Card](https://goreportcard.com/badge/github.com/creachadair/snapback)](https://goreportcard.com/report/github.com/creachadair/snapback)
 
 `snapback` is a command-line wrapper tool that makes it easier to manage backups on the [tarsnap][ts] service. Under the covers, it calls out to the `tarsnap` command-line tool to create, list, and delete backups, and can read settings from a configuration file.
