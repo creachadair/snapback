@@ -5,7 +5,7 @@ require (
 	bitbucket.org/creachadair/stringset v0.0.8
 	github.com/creachadair/atomicfile v0.2.1
 	github.com/creachadair/staticfile v0.1.3
-	github.com/creachadair/tarsnap v0.3.1
+	github.com/creachadair/tarsnap v0.3.2
 	github.com/google/go-cmp v0.5.1
 	github.com/kr/text v0.2.0 // indirect
 	github.com/niemeyer/pretty v0.0.0-20200227124842-a10e7caefd8e // indirect
