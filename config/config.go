@@ -303,6 +303,7 @@ func Parse(r io.Reader) (*Config, error) {
 	sortExp(cfg.Expiration)
 	expand(&cfg.Keyfile)
 	expand(&cfg.WorkDir)
+	expand(&cfg.CacheDir)
 	expand(&cfg.ListCache)
 	expand(&cfg.AutoPrune.Timestamp)
 
