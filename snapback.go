@@ -277,14 +277,15 @@ func pruneArchives(cfg *config.Config, as []tarsnap.Archive) {
 	} else if err := cfg.Config.Delete(prune...); err != nil {
 		log.Fatalf("Deleting archives: %v", err)
 	}
-	elapsed := time.Since(start).Round(time.Second)
+	elapsed := time.Since(start)
 	cfg.List() // repair the list cache
-	log.Printf("Pruning finished [%v elapsed]", elapsed)
+	log.Printf("Pruning finished [%v elapsed]", elapsed.Round(time.Second))
 	if *doJSON {
 		bits, _ := json.Marshal(struct {
+			N time.Time         `json:"now"`
 			P []tarsnap.Archive `json:"pruned"`
 			E time.Duration     `json:"elapsed"`
-		}{P: expired, E: elapsed})
+		}{N: now.In(time.UTC), P: expired, E: elapsed})
 		fmt.Println(string(bits))
 	} else {
 		fmt.Println(strings.Join(prune, "\n"))
