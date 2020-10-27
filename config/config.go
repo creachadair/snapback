@@ -51,8 +51,8 @@ type Config struct {
 
 // A BackupPath describes a path relative to a particular backup.
 type BackupPath struct {
-	Relative string
-	Backup   *Backup
+	Relative string  `json:"relative"`
+	Backup   *Backup `json:"backup"`
 }
 
 // FindPath reports the backups that claim path, or nil if there are none.
@@ -269,10 +269,10 @@ func (c *Config) logf(msg string, args ...interface{}) {
 type Backup struct {
 	// The name defines the base name of the archive. A timestamp will be
 	// appended to this name to obtain the complete name.
-	Name string
+	Name string `json:"name"`
 
 	// Expiration policies.
-	Expiration []*Policy
+	Expiration []*Policy `json:"expiration,omitempty"`
 
 	// Named expiration policy. If no policy is named, any explicit rules are
 	// used and the default rules are ignored. Otherwise any explicit rules are
@@ -283,7 +283,7 @@ type Backup struct {
 	// If "none", an empty policy is used.
 	//
 	// Any other name uses the rules from that policy.
-	Policy string
+	Policy string `json:"policy,omitempty"`
 
 	// Expand shell globs in included paths.
 	GlobIncludes bool `json:"globIncludes" yaml:"glob-includes"`
