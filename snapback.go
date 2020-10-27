@@ -7,8 +7,10 @@
 package main
 
 import (
+	"encoding/json"
 	"flag"
 	"fmt"
+	"io"
 	"log"
 	"os"
 	"os/exec"
@@ -17,7 +19,6 @@ import (
 	"strconv"
 	"strings"
 	"text/tabwriter"
-	"text/template"
 	"time"
 
 	"bitbucket.org/creachadair/shell"
@@ -77,7 +78,7 @@ var (
 	defaultConfig = "$HOME/.snapback"
 
 	configFile = flag.String("config", defaultConfig, "Configuration file")
-	outFormat  = flag.String("format", "", "Output format (Go template)")
+	doJSON     = flag.Bool("json", false, "Write machine-readable output in JSON")
 	doCreate   = flag.Bool("c", false, "Create backups (default if no arguments are given)")
 	doFind     = flag.Bool("find", false, "Find backups containing the specified paths")
 	doList     = flag.Bool("list", false, "List known archives")
@@ -159,12 +160,26 @@ func main() {
 	}
 
 	start := time.Now()
-	if err := createBackups(cfg, flag.Args()); err != nil {
-		log.Fatalf("Failed: %v", err)
-	}
-	elapsed := time.Since(start).Round(time.Second)
+	created, err := createBackups(cfg, flag.Args())
+	elapsed := time.Since(start)
 	arch, _ = cfg.List() // repair the list cache
-	log.Printf("Backups finished [%v elapsed]", elapsed)
+	if *doJSON {
+		out := struct {
+			T time.Duration `json:"elapsed"`
+			C []string      `json:"created"`
+			E string        `json:"error,omitempty"`
+			D bool          `json:"dryRun,omitempty"`
+		}{T: elapsed, C: created, D: *doDryRun}
+		if err != nil {
+			out.E = err.Error()
+		}
+		bits, _ := json.Marshal(out)
+		fmt.Println(string(bits))
+	} else if err != nil {
+		log.Fatalf("Failed: %v", err)
+	} else {
+		log.Printf("Backups finished [%v elapsed]", elapsed.Round(time.Second))
+	}
 	if cfg.ShouldAutoPrune() {
 		fmt.Fprintln(os.Stderr, "-- Auto-pruning archives")
 		pruneArchives(cfg, arch)
@@ -175,44 +190,52 @@ func findArchives(cfg *config.Config, _ []tarsnap.Archive) {
 	if flag.NArg() == 0 {
 		log.Fatal("No paths were specified to -find")
 	}
-	tw := tabwriter.NewWriter(os.Stdout, 0, 8, 3, ' ', 0)
+	var w io.Writer = os.Stdout
+	if !*doJSON {
+		tw := tabwriter.NewWriter(os.Stdout, 0, 8, 3, ' ', 0)
+		defer tw.Flush()
+		w = tw
+	}
+	type entry struct {
+		Path    string              `json:"path"`
+		Backups []config.BackupPath `json:"backups"`
+	}
 	for _, path := range flag.Args() {
 		abs, err := filepath.Abs(path)
 		if err != nil {
 			log.Fatalf("Unable to resolve %q: %v", path, err)
 		}
-		bs := cfg.FindPath(abs)
-		for _, b := range bs {
-			fmt.Fprint(tw, b.Relative, "\t", b.Backup.Name, "\n")
-		}
-		if len(bs) == 0 && (*doVerbose || *doVVerbose) {
-			fmt.Fprint(tw, path, "\t", "NONE", "\n")
+		e := entry{Path: abs, Backups: cfg.FindPath(abs)}
+		if *doJSON {
+			bits, _ := json.Marshal(e)
+			fmt.Fprintln(w, string(bits))
+		} else {
+			for _, b := range e.Backups {
+				fmt.Fprint(w, b.Relative, "\t", b.Backup.Name, "\n")
+			}
+			if len(e.Backups) == 0 && (*doVerbose || *doVVerbose) {
+				fmt.Fprint(w, path, "\t", "NONE", "\n")
+			}
 		}
 	}
-	tw.Flush()
 }
 
 func listArchives(_ *config.Config, as []tarsnap.Archive) {
-	ft := *outFormat
-	if ft == "" {
-		ft = "{{.Created}}\t{{.Name}}\n"
-	} else if !strings.HasSuffix(ft, "\n") {
-		ft += "\n"
-	}
-	t, err := template.New("list").Parse(ft)
-	if err != nil {
-		log.Fatalf("Parsing output format: %v", err)
-	}
+	var match []tarsnap.Archive
 	for _, arch := range as {
-		if matchExpr(arch.Name, flag.Args()) {
-			err := t.Execute(os.Stdout, struct {
-				Created string
-				tarsnap.Archive
-			}{Created: arch.Created.In(time.Local).Format(time.RFC3339), Archive: arch})
-			if err != nil {
-				log.Fatalf("Writing %v: %v", arch, err)
-			}
+		if !matchExpr(arch.Name, flag.Args()) {
+			continue
+		} else if *doJSON {
+			match = append(match, arch)
+		} else {
+			fmt.Println(arch.Name)
 		}
+	}
+	if *doJSON {
+		bits, _ := json.Marshal(struct {
+			A []tarsnap.Archive `json:"archives"`
+		}{A: match})
+		fmt.Println(string(bits))
 	}
 }
 
@@ -241,10 +264,11 @@ func pruneArchives(cfg *config.Config, as []tarsnap.Archive) {
 		}
 	}
 
-	var prune []string
-	for _, p := range cfg.FindExpired(chosen, now) {
-		prune = append(prune, p.Name)
-	}
+	expired := cfg.FindExpired(chosen, now)
+	prune := stringset.FromIndexed(len(expired), func(i int) string {
+		return expired[i].Name
+	}).Elements()
+
 	if len(prune) == 0 {
 		fmt.Fprintln(os.Stderr, "Nothing to prune")
 		return
@@ -256,7 +280,15 @@ func pruneArchives(cfg *config.Config, as []tarsnap.Archive) {
 	elapsed := time.Since(start).Round(time.Second)
 	cfg.List() // repair the list cache
 	log.Printf("Pruning finished [%v elapsed]", elapsed)
-	fmt.Println(strings.Join(prune, "\n"))
+	if *doJSON {
+		bits, _ := json.Marshal(struct {
+			P []tarsnap.Archive `json:"pruned"`
+			E time.Duration     `json:"elapsed"`
+		}{P: expired, E: elapsed})
+		fmt.Println(string(bits))
+	} else {
+		fmt.Println(strings.Join(prune, "\n"))
+	}
 
 	// If we actually pruned something, update the timestamp.
 	if !*doDryRun {
@@ -357,13 +389,23 @@ func printSizes(cfg *config.Config, as []tarsnap.Archive) {
 	if err != nil {
 		log.Fatalf("Reading stats: %v", err)
 	}
-	tw := tabwriter.NewWriter(os.Stdout, 0, 8, 3, ' ', 0)
-	fmt.Fprintf(tw, "TOTAL\t%s raw\t%s comp\t%s uniq\t%s incr\n",
-		H(info.All.InputBytes), H(info.All.CompressedBytes),
-		H(info.All.UniqueBytes), H(info.All.CompressedUniqueBytes))
 
+	var w io.Writer = os.Stdout
+	if !*doJSON {
+		tw := tabwriter.NewWriter(os.Stdout, 0, 8, 3, ' ', 0)
+		defer tw.Flush()
+		w = tw
+		fmt.Fprintf(tw, "TOTAL\t%s raw\t%s comp\t%s uniq\t%s incr\n",
+			H(info.All.InputBytes), H(info.All.CompressedBytes),
+			H(info.All.UniqueBytes), H(info.All.CompressedUniqueBytes))
+	}
+
+	type archiveSize struct {
+		Name string `json:"archive"`
+		*tarsnap.Sizes
+	}
+	var archives []archiveSize
 	var subtotal tarsnap.Sizes
-	var numPrinted int
 	for _, name := range names {
 		size, ok := info.Archive[name]
 		if ok {
@@ -372,18 +414,37 @@ func printSizes(cfg *config.Config, as []tarsnap.Archive) {
 			subtotal.UniqueBytes += size.UniqueBytes
 			subtotal.CompressedUniqueBytes += size.CompressedUniqueBytes
 
-			fmt.Fprintf(tw, "%s\t%s\t%s\t%s\t%s\n", name,
-				H(size.InputBytes), H(size.CompressedBytes),
-				H(size.UniqueBytes), H(size.CompressedUniqueBytes))
-			numPrinted++
+			if !*doJSON {
+				fmt.Fprintf(w, "%s\t%s\t%s\t%s\t%s\n", name,
+					H(size.InputBytes), H(size.CompressedBytes),
+					H(size.UniqueBytes), H(size.CompressedUniqueBytes))
+			} else {
+				archives = append(archives, archiveSize{
+					Name:  name,
+					Sizes: size,
+				})
+			}
 		}
 	}
-	if numPrinted > 1 {
-		fmt.Fprintf(tw, "SUBTOTAL\t%s\t%s\t%s\t%s\n",
+	if *doJSON {
+		out := struct {
+			T *tarsnap.Sizes `json:"total"`
+			S *tarsnap.Sizes `json:"subtotal,omitempty"`
+			A []archiveSize  `json:"sizes,omitempty"`
+		}{
+			T: info.All,
+			A: archives,
+		}
+		if subtotal != (tarsnap.Sizes{}) {
+			out.S = &subtotal
+		}
+		bits, _ := json.Marshal(out)
+		fmt.Fprintln(w, string(bits))
+	} else if subtotal != (tarsnap.Sizes{}) {
+		fmt.Fprintf(w, "SUBTOTAL\t%s\t%s\t%s\t%s\n",
 			H(subtotal.InputBytes), H(subtotal.CompressedBytes),
 			H(subtotal.UniqueBytes), H(subtotal.CompressedUniqueBytes))
 	}
-	tw.Flush()
 }
 
 func chooseBackups(cfg *config.Config, names []string) ([]*config.Backup, error) {
@@ -407,15 +468,16 @@ func chooseBackups(cfg *config.Config, names []string) ([]*config.Backup, error)
 	return sets, nil
 }
 
-func createBackups(cfg *config.Config, names []string) error {
+func createBackups(cfg *config.Config, names []string) ([]string, error) {
 	sets, err := chooseBackups(cfg, names)
 	if err != nil {
-		return err
+		return nil, err
 	}
 
 	ts := time.Now()
 	tag := "." + ts.Format("20060102-1504")
 	nerrs := 0
+	var created []string
 	for _, b := range sets {
 		opts := b.CreateOptions
 		opts.DryRun = *doDryRun
@@ -424,14 +486,15 @@ func createBackups(cfg *config.Config, names []string) error {
 		if err := cfg.Config.Create(name, opts); err != nil {
 			log.Printf("ERROR: %s: %v", name, err)
 			nerrs++
-		} else {
+		} else if !*doJSON {
 			fmt.Println(name)
 		}
+		created = append(created, name)
 	}
 	if nerrs > 0 {
-		return fmt.Errorf("%d errors", nerrs)
+		return created, fmt.Errorf("%d errors", nerrs)
 	}
-	return nil
+	return created, nil
 }
 
 func checkUpdate() {
