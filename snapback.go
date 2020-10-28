@@ -108,6 +108,9 @@ func main() {
 	} else if *doVVerbose || (*doVerbose && *doPrune) {
 		cfg.Verbose = true
 	}
+	if cfg.JSON {
+		*doJSON = true
+	}
 	ts := &cfg.Config
 	ts.CmdLog = logCommand
 	if ts.WorkDir == "" {

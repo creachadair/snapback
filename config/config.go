@@ -35,6 +35,9 @@ type Config struct {
 	// Enable verbose logging.
 	Verbose bool
 
+	// Enable machine-readable output.
+	JSON bool
+
 	// Cache archive listings in this file.
 	ListCache  string     `json:"listCache" yaml:"list-cache"`
 	cachedList *ListCache // non-nil when populated
