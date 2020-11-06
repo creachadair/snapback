@@ -422,12 +422,11 @@ func printSizes(cfg *config.Config, as []tarsnap.Archive) {
 				fmt.Fprintf(w, "%s\t%s\t%s\t%s\t%s\n", name,
 					H(size.InputBytes), H(size.CompressedBytes),
 					H(size.UniqueBytes), H(size.CompressedUniqueBytes))
-			} else {
-				archives = append(archives, archiveSize{
-					Name:  name,
-					Sizes: size,
-				})
 			}
+			archives = append(archives, archiveSize{
+				Name:  name,
+				Sizes: size,
+			})
 		}
 	}
 	if *doJSON {
@@ -439,12 +438,12 @@ func printSizes(cfg *config.Config, as []tarsnap.Archive) {
 			T: info.All,
 			A: archives,
 		}
-		if subtotal != (tarsnap.Sizes{}) {
+		if len(archives) > 1 {
 			out.S = &subtotal
 		}
 		bits, _ := json.Marshal(out)
 		fmt.Fprintln(w, string(bits))
-	} else if subtotal != (tarsnap.Sizes{}) {
+	} else if len(archives) > 1 {
 		fmt.Fprintf(w, "SUBTOTAL\t%s\t%s\t%s\t%s\n",
 			H(subtotal.InputBytes), H(subtotal.CompressedBytes),
 			H(subtotal.UniqueBytes), H(subtotal.CompressedUniqueBytes))
