@@ -386,6 +386,9 @@ func printSizes(cfg *config.Config, as []tarsnap.Archive) {
 				names = append(names, a.Name)
 			}
 		}
+		if len(names) == 0 {
+			log.Fatalf("No matching archives")
+		}
 		sort.Strings(names)
 	}
 
