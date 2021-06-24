@@ -291,6 +291,10 @@ type Backup struct {
 	// Expand shell globs in included paths.
 	GlobIncludes bool `json:"globIncludes" yaml:"glob-includes"`
 
+	// Exclude this backup from the default list applied when no backup sets are
+	// listed on the command-line.
+	Manual bool `json:"manual,omitempty"`
+
 	// The archive creation options for this backup.
 	tarsnap.CreateOptions `yaml:",inline"`
 }

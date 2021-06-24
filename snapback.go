@@ -454,11 +454,16 @@ func printSizes(cfg *config.Config, as []tarsnap.Archive) {
 }
 
 func chooseBackups(cfg *config.Config, names []string) ([]*config.Backup, error) {
+	var sets []*config.Backup
 	if len(names) == 0 {
-		return cfg.Backup, nil
+		for _, b := range cfg.Backup {
+			if !b.Manual {
+				sets = append(sets, b)
+			}
+		}
+		return sets, nil
 	}
 	seen := stringset.New()
-	var sets []*config.Backup
 	for _, name := range names {
 		if seen.Contains(name) {
 			return nil, fmt.Errorf("duplicate backup set %q", name)
