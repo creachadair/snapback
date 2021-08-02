@@ -490,6 +490,7 @@ func createBackups(cfg *config.Config, names []string) ([]string, error) {
 	nerrs := 0
 	var created []string
 	for _, b := range sets {
+		b.ExpandIncludes(cfg.WorkDir)
 		opts := b.CreateOptions
 		opts.DryRun = *doDryRun
 		opts.CreationTime = ts

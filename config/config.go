@@ -299,6 +299,38 @@ type Backup struct {
 	tarsnap.CreateOptions `yaml:",inline"`
 }
 
+// ExpandIncludes performs glob expansion on the include paths of b relative to
+// the given working directory, replacing the paths with their expansion.
+// If GlobIncludes is false, the include paths are not modified.
+func (b *Backup) ExpandIncludes(wd string) {
+	if !b.GlobIncludes {
+		return
+	}
+	base := b.WorkDir
+	if base == "" {
+		base = wd
+	}
+	vpath := func(inc string) string {
+		if filepath.IsAbs(inc) {
+			return inc
+		}
+		return filepath.Join(base, inc)
+	}
+
+	var paths []string
+	for _, inc := range b.Include {
+		path := vpath(inc)
+		matches, _ := filepath.Glob(path)
+		for _, match := range matches {
+			if t := strings.TrimPrefix(match, base+"/"); t != match {
+				match = t
+			}
+			paths = append(paths, match)
+		}
+	}
+	b.Include = paths
+}
+
 // Parse decodes a *Config from the specified reader.
 func Parse(r io.Reader) (*Config, error) {
 	dec := yaml.NewDecoder(r)
@@ -326,9 +358,8 @@ func Parse(r io.Reader) (*Config, error) {
 		seen[b.Name] = true
 		sortExp(b.Expiration)
 		expand(&b.WorkDir)
-		if b.GlobIncludes {
-			expandGlobs(b, cfg.WorkDir)
-		}
+		// N.B. Glob expansion is deferred until we know whether we are creating
+		// backups or just examining the configuration.
 	}
 	for _, named := range cfg.Policy {
 		sortExp(named)
@@ -337,29 +368,3 @@ func Parse(r io.Reader) (*Config, error) {
 }
 
 func expand(s *string) { *s = os.ExpandEnv(*s) }
-
-func expandGlobs(b *Backup, wd string) {
-	base := b.WorkDir
-	if base == "" {
-		base = wd
-	}
-	vpath := func(inc string) string {
-		if filepath.IsAbs(inc) {
-			return inc
-		}
-		return filepath.Join(base, inc)
-	}
-
-	var paths []string
-	for _, inc := range b.Include {
-		path := vpath(inc)
-		matches, _ := filepath.Glob(path)
-		for _, match := range matches {
-			if t := strings.TrimPrefix(match, base+"/"); t != match {
-				match = t
-			}
-			paths = append(paths, match)
-		}
-	}
-	b.Include = paths
-}
