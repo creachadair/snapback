@@ -4,7 +4,7 @@ require (
 	bitbucket.org/creachadair/shell v0.0.6
 	bitbucket.org/creachadair/stringset v0.0.9
 	github.com/creachadair/atomicfile v0.2.1
-	github.com/creachadair/staticfile v0.1.3
+	github.com/creachadair/staticfile v0.2.0
 	github.com/creachadair/tarsnap v0.4.1
 	github.com/google/go-cmp v0.5.1
 	github.com/kr/text v0.2.0 // indirect
