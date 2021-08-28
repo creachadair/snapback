@@ -37,6 +37,7 @@ func init() {
 	flag.Usage = func() {
 		fmt.Fprintf(os.Stderr, `Usage: %[1]s [-v]            # create new backups of all sets
        %[1]s -c <name>...    # create new backups of specified sets
+       %[1]s -entries <name> # list the contents of specified archives
        %[1]s -find <path>... # find files in backups
        %[1]s -list           # list existing backups
        %[1]s -prune          # clean up old backups
@@ -80,6 +81,7 @@ var (
 	configFile = flag.String("config", defaultConfig, "Configuration file")
 	doJSON     = flag.Bool("json", false, "Write machine-readable output in JSON")
 	doCreate   = flag.Bool("c", false, "Create backups (default if no arguments are given)")
+	doEntries  = flag.Bool("entries", false, "List the contents of the specified archives")
 	doFind     = flag.Bool("find", false, "Find backups containing the specified paths")
 	doList     = flag.Bool("list", false, "List known archives")
 	doPrune    = flag.Bool("prune", false, "Prune out-of-band archives")
@@ -130,7 +132,7 @@ func main() {
 	}
 
 	// If we need a list of existing archives, grab it.  For size calculations
-	// we only need the full archve listing if the user has given us globs to
+	// we only need the full archive listing if the user has given us globs to
 	// select names from.
 	var arch []tarsnap.Archive
 	if *doList || *doPrune || (*doSize && hasGlob(flag.Args())) {
@@ -145,6 +147,10 @@ func main() {
 	}
 	if *doList {
 		listArchives(cfg, arch)
+		return
+	}
+	if *doEntries {
+		listEntries(cfg, arch)
 		return
 	}
 	if *doPrune {
@@ -219,6 +225,29 @@ func findArchives(cfg *config.Config, _ []tarsnap.Archive) {
 			if len(e.Backups) == 0 && (*doVerbose || *doVVerbose) {
 				fmt.Fprint(w, path, "\t", "NONE", "\n")
 			}
+		}
+	}
+}
+
+func listEntries(cfg *config.Config, _ []tarsnap.Archive) {
+	if flag.NArg() == 0 {
+		log.Fatal("No archives were specified to list -entries")
+	}
+	for _, arch := range flag.Args() {
+		if err := cfg.Entries(arch, func(e *tarsnap.Entry) error {
+			if *doJSON {
+				bits, _ := json.Marshal(struct {
+					N string    `json:"name"`
+					S int64     `json:"size"`
+					M time.Time `json:"modTime"`
+				}{N: e.Name, S: e.Size, M: e.ModTime})
+				fmt.Println(string(bits))
+			} else {
+				fmt.Println(e.Name)
+			}
+			return nil
+		}); err != nil {
+			log.Fatalf("Listing entries for %q: %v", arch, err)
 		}
 	}
 }
@@ -486,7 +515,7 @@ func createBackups(cfg *config.Config, names []string) ([]string, error) {
 	}
 
 	ts := time.Now()
-	tag := "." + ts.Format("20060102-1504")
+	tag := "." + ts.Format("20060102-154304")
 	nerrs := 0
 	var created []string
 	for _, b := range sets {
