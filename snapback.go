@@ -515,7 +515,7 @@ func createBackups(cfg *config.Config, names []string) ([]string, error) {
 	}
 
 	ts := time.Now()
-	tag := "." + ts.Format("20060102-154304")
+	tag := "." + ts.Format("20060102-1504")
 	nerrs := 0
 	var created []string
 	for _, b := range sets {
