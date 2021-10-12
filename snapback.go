@@ -573,22 +573,23 @@ func matchExpr(name string, exprs []string) bool {
 }
 
 func loadConfig(path string) (string, *config.Config, error) {
-	if path == "" {
-		path = defaultConfig
-	}
-	loc, err := filepath.Abs(os.ExpandEnv(path))
-	if err != nil {
-		return "", nil, err
-	}
-	f, err := static.Open(loc)
+	exp := os.ExpandEnv(path)
+	f, err := static.Open(exp)
 	if errors.Is(err, fs.ErrNotExist) {
-		f, err = os.Open(loc)
+		f, err = os.Open(exp)
 	}
 	if err != nil {
 		return "", nil, err
 	}
 	defer f.Close()
 	cfg, err := config.Parse(f)
+	if err != nil {
+		return "", nil, err
+	}
+	loc, err := filepath.Abs(exp)
+	if err != nil {
+		return "", nil, err
+	}
 	return filepath.Dir(loc), cfg, err
 }
 
