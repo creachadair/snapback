@@ -7,10 +7,13 @@
 package main
 
 import (
+	"embed"
 	"encoding/json"
+	"errors"
 	"flag"
 	"fmt"
 	"io"
+	"io/fs"
 	"log"
 	"os"
 	"os/exec"
@@ -24,7 +27,6 @@ import (
 	"bitbucket.org/creachadair/shell"
 	"bitbucket.org/creachadair/stringset"
 	"github.com/creachadair/snapback/config"
-	"github.com/creachadair/staticfile"
 	"github.com/creachadair/tarsnap"
 )
 
@@ -75,10 +77,17 @@ Options:
 	}
 }
 
+//go:generate rm -fr -- static static.go
+//go:generate ./embed.sh
+
 var (
+	// By default, the -config flag is used to select a configuration file.
+	// To embed a static default config, set SNAPBACK_CONFIG to the path of
+	// the config you want to embed and run go generate.
+	static        embed.FS
 	defaultConfig = "$HOME/.snapback"
 
-	configFile = flag.String("config", defaultConfig, "Configuration file")
+	configFile *string // set in main, so the generated default will take effect
 	doJSON     = flag.Bool("json", false, "Write machine-readable output in JSON")
 	doCreate   = flag.Bool("c", false, "Create backups (default if no arguments are given)")
 	doEntries  = flag.Bool("entries", false, "List the contents of the specified archives")
@@ -95,6 +104,9 @@ var (
 )
 
 func main() {
+	// N.B. We define this flag here rather than at init time, so that a
+	// generated static default will be evaluated before the flag is defined.
+	configFile = flag.String("config", defaultConfig, "Configuration file")
 	flag.Parse()
 
 	if *doUpdate {
@@ -561,11 +573,17 @@ func matchExpr(name string, exprs []string) bool {
 }
 
 func loadConfig(path string) (string, *config.Config, error) {
+	if path == "" {
+		path = defaultConfig
+	}
 	loc, err := filepath.Abs(os.ExpandEnv(path))
 	if err != nil {
 		return "", nil, err
 	}
-	f, err := staticfile.Open(loc)
+	f, err := static.Open(loc)
+	if errors.Is(err, fs.ErrNotExist) {
+		f, err = os.Open(loc)
+	}
 	if err != nil {
 		return "", nil, err
 	}
