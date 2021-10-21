@@ -3,12 +3,28 @@
 package config
 
 import (
+	"os"
 	"strings"
 	"testing"
 
 	"github.com/creachadair/tarsnap"
 	"github.com/google/go-cmp/cmp"
 )
+
+func TestExampleConfig(t *testing.T) {
+	f, err := os.Open("example.yml")
+	if err != nil {
+		t.Fatalf("Example config: %v", err)
+	}
+	defer f.Close()
+
+	cfg, err := Parse(f)
+	if err != nil {
+		t.Fatalf("Parse example failed: %v", err)
+	}
+
+	t.Logf("Parsed example config OK: %+v", cfg)
+}
 
 func TestPolicyOrder(t *testing.T) {
 	tests := []struct {

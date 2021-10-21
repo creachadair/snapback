@@ -1,0 +1,196 @@
+##
+## example.yml: example snapback configuration file
+##
+## This file shows examples of all the available settings.
+##
+
+# -- The "backup" section is a list of backup sets.
+# A backup set defines a collection of files to be backed up together.
+#
+backup:
+  # Each backup set must have a unique name. Archives belonging to this
+  # backup set share this name as a prefix, e.g., "set-one.20211021-1523".
+  - name: set-one
+
+    # A backup set may have an optional expiration policy, that overrides the
+    # default defined in the top-level "expiration" section.
+    expiration:
+      - after: 5 years
+        sample: none
+
+    # A backup set may specify an expiration policy by name, referring to the
+    # rules defined in the top-level "policy" section. Any explicit expiration
+    # rules defined above are added to the policy selected here.
+    #
+    # The default is "none", meaning an empty policy.
+    # The name "default" means the top-level expiration defaults.
+    policy: precious
+
+    # The tarsnap tool does not expand shell globs in file include paths.
+    # Setting this to true instructs the snapback tool to perform glob
+    # expansion on include paths prior to calling tarsnap.
+    glob-includes: true
+
+    # Exclude this backup from the default list applied when no backup sets are
+    # listed on the snapback command-line.
+    manual: true
+
+    # Use this as the working directory when operating on archives in this set.
+    # This overrides the top-level "workdir" setting.
+    workdir: "$HOME/special"
+
+    # Include these files or directories in the archive. Paths are relative to
+    # the working directory. Globs are not expanded unless glob-includes is true.
+    include:
+      - "audio/*.aiff"
+      - "video"
+
+    # Exclude paths matching these glob patterns from the archive.
+    exclude:
+      - "video/*.ogg"
+
+    # Apply tarsnap modification rules to paths.
+    # See the description of the "-s" flag in "man tarsnap" for details.
+    modify:
+      - "/^\\.//"         # delete a leading period from each path
+      - "/\\.jpeg$/.jpg"  # translate the ".jpeg" extension to ".jpg"
+
+    # Ordinarily tarsnap records symlinks literally, rather than their targets.
+    # Set this true to store the target file instead.
+    follow-symlinks: true
+
+    # Ordinarily tarsnap does not record last-accessed times. since file access
+    # times change often and do not affect the content, storing them is not advised.
+    # Set this true to store them anyway.
+    store-access-time: true
+
+    # Ordinarily tarsnap removes the leading "/" from absolute paths
+    # Set this true to preserve absolute paths.
+    preserve-paths: true
+
+
+# -- The "expiration" section defines the default expiration rules.
+# Ths policy applies to all backup sets that do not override it.
+#
+# An expiration policy gives rules for how long archives in a backup set should
+# be retained. Archives outside the policy can be pruned (discarded).
+#
+# Each entry in the expiration list is a single policy rule.
+#
+# When there are multiple rules, a rule is "applicable" to an archive in a
+# backup set if the archive was created within the interval of time before
+# present defined by the "after" and "until" fields of the rule.
+#
+# If multiple rules apply to an archive, the most-applicable rule is the
+# earliest (closest to present) and narrowest (smallest window size) rule that
+# covers the archive. The most-applicable rule for each archive determines its
+# disposition.
+#
+expiration:
+  - latest: 1    # keep the most recent 1 entry unconditionally
+
+    # The rest of the rule defines a window of time before present during
+    # which members of the backup set are "sampled"
+    #
+    # Sampling partitions the window into equal-length intervals, measured
+    # from the Unix epoch, and chooses the most recent member within that
+    # interval to represent that interval.
+    after: 1 day       # after 1 day (before present)
+    until: 2 weeks     # until 2 weeks (before present)
+    sample: 1 / day    # select at most 1 member in each 1-day window
+
+    # When there are multiple policy rules, a rule is "applicable" to a member
+    # of the backup set
+  - after: 2 weeks     # after 2 weeks (before present)
+    until: 6 months    # until 6 months (before present)
+    sample: 1/week     # select at most 1 member in each 1-week window
+
+  - after: 6 months    # after 6 months (before present)
+    sample: none       # select none, meaning, discard everything
+
+
+# -- The "policy" section defines optional named expiration policies.
+# Backup sets can refer to a policy from this map by its name.
+#
+policy:
+  # Each policy has a unique name that identifies the policy.
+  # The contents of each entry are as described in the "expiration" section.
+  precious:
+    # Keep the latest 2 archives always; beyond that keep 1 archive per day up
+    # to 6 weeks, then 1 per week until 1 year, then 1 per year forever.
+    - latest: 2
+      after: 1 day
+      sample: 1/day
+    - after: 6 weeks
+      sample: 1/month
+    - after: 1 year
+      sample: 1/year
+
+  short-term:
+    # Keep the latest 2 archives always; beyond that keep everything up to 1
+    # week and after that discard everything.
+    - latest: 2
+      after: 1 week
+      sample: none
+
+
+# -- This section gives general settings for the snapback command-line tool.
+
+# Enable verbose debug logging by default. You can also enable verbose logging
+# for a single run using the "-v" and "-vv" command-line flags.
+verbose: true
+
+# Enable JSON output by default. You can also enable JSON output for a single
+# run using the "-json" command-line flag.
+json: true
+
+# Listing tarsnap archives can be time-consuming. To speed up listing archives,
+# set this to a file path where listings can be cached.
+# Environment variables (e.g., $HOME) are expanded in this value.
+list-cache: $HOME/.cache/tarsnap/example-listing.json
+
+# Define these settings to instruct the snapback tool to automatically prune
+# archives according to the expiration policies. If not defined, snapback will
+# only prune when explicitly asked to do so by the "-prune" flag.
+#
+# Automatic pruning is done after creating new backups.
+auto-prune:
+  # The path of a file where the last auto-prune time is saved.
+  timestamp: $HOME/.settings/snapback/example-last-pruned
+
+  # How frequently to run an automatic prune.
+  interval: 3 days
+
+
+# -- This section gives general settings for the tarsnap command-line tool.
+
+# Use this path as the current working directory when running the tarsnap
+# command-line tool. Individual backup sets may override this default.
+# If not set, the tool uses the process's current working directory.
+# Environment variables (e.g., $HOME) are expanded in this value.
+workdir: $HOME
+
+# Use this path as the location of the "tarsnap" command-line tool.
+# If this is not set, the normal search path ($PATH) is consulted.
+# Environment variables are expanded in this value.
+tool: "/usr/local/bin/tarsnap"
+
+# Use this path as the tarsnap encryption key file.
+# If this is not set, use the keyfile from in the default tarsnap config.
+# Environment variables are expanded in this value.
+keyfile: $HOME/.settings/backups/tarsnap.key
+
+# Use this path as the tarsnap cache directory. If you want to run multiple
+# backups concurrently, you should set this to a different value for each.
+# If this is not set, use the cache directory from the default tarsnap config.
+# Environment variables are expanded in this value.
+cachedir: "$HOME/Library/Caches/tarsnap/example"
+
+# Additional flags to include when executing the tarsnap tool.
+# This should not ordinarily be necessary, unless you are doing something weird.
+# Be careful: Careless use of this feature may cause commands to fail.
+# See "man tarsnap" for names and meanings of the flags.
+flags:
+  # When creating archives ("-c"), enable aggressive networking.
+  - match: "-c"
+    flag: "aggressive-networking"
