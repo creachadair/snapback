@@ -5,7 +5,6 @@ package config
 import (
 	"encoding/json"
 	"fmt"
-	"io/ioutil"
 	"os"
 	"path/filepath"
 
@@ -21,7 +20,7 @@ type ListCache struct {
 
 // LoadFrom populates c from the data stored in the specified file.
 func (c *ListCache) LoadFrom(path string) error {
-	data, err := ioutil.ReadFile(path)
+	data, err := os.ReadFile(path)
 	if err != nil {
 		return err
 	}
