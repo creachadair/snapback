@@ -167,6 +167,14 @@ func (c *Config) findPolicy(b *Backup) []*Policy {
 	}
 }
 
+func (c *Config) checkPolicy(b *Backup) bool {
+	if b.Policy == "" {
+		return true
+	}
+	_, ok := c.Policy[b.Policy]
+	return ok || b.Policy == "default" || b.Policy == "none"
+}
+
 // FindExpired returns a slice of the archives in arch that are eligible for
 // removal under the expiration policies in effect for c, given that now is the
 // moment denoting the present.
@@ -352,7 +360,7 @@ func Parse(r io.Reader) (*Config, error) {
 			return nil, errors.New("empty backup name")
 		} else if seen[b.Name] {
 			return nil, fmt.Errorf("repeated backup name %q", b.Name)
-		} else if _, ok := cfg.Policy[b.Policy]; !ok && b.Policy != "" {
+		} else if !cfg.checkPolicy(b) {
 			return nil, fmt.Errorf("undefined policy %q for backup %q", b.Policy, b.Name)
 		}
 		seen[b.Name] = true

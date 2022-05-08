@@ -68,6 +68,12 @@ backup:
     # Set this true to preserve absolute paths.
     preserve-paths: true
 
+  - name: set-two
+    policy: none  # means to ignore the default policy
+    expiration:
+      - latest: 5
+      - after: 1 week
+        sample: 3 / 5 weeks
 
 # -- The "expiration" section defines the default expiration rules.
 # Ths policy applies to all backup sets that do not override it.
