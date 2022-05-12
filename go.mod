@@ -6,7 +6,7 @@ require (
 	github.com/creachadair/atomicfile v0.2.6
 	github.com/creachadair/tarsnap v0.4.3
 	github.com/google/go-cmp v0.5.6
-	gopkg.in/yaml.v3 v3.0.0-20210107192922-496545a6307b
+	gopkg.in/yaml.v3 v3.0.0-20220512140231-539c8e751b99
 )
 
 require (
