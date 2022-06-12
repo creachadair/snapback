@@ -552,7 +552,7 @@ func createBackups(cfg *config.Config, names []string) ([]string, error) {
 
 func checkUpdate() {
 	fmt.Fprintf(os.Stderr, "-- Updating %s from the network\n", toolPackage)
-	cmd := exec.Command("go", "get", "-u", toolPackage)
+	cmd := exec.Command("go", "install", toolPackage+"@latest")
 	cmd.Dir = os.TempDir()
 	logCommand(cmd.Dir, cmd.Args)
 	cmd.Env = append(os.Environ(), "GO111MODULE=on", "GOPROXY=direct")
