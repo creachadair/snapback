@@ -17,9 +17,9 @@ import (
 // For example suppose X is an archive created 7 days before present, and we
 // have these policies:
 //
-//    P(min=1d, max=10d)
-//    Q(min=4d, max=8d)
-//    R(min=3d, max=6d)
+//	P(min=1d, max=10d)
+//	Q(min=4d, max=8d)
+//	R(min=3d, max=6d)
 //
 // Archive X will be governed by policy Q. R is ineligible because it does not
 // span the creation time of X, and Q is preferable to P because Q is only 4

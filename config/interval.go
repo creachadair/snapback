@@ -13,12 +13,12 @@ import (
 // An Interval represents a time interval in seconds. An Interval can be parsed
 // from a string in the format "d.dd unit" or "d unit", where unit is one of
 //
-//   s, sec, secs         -- seconds
-//   h, hr, hour, hours   -- hours
-//   d, day, days         -- days (defined as 24 hours)
-//   w, wk, week, weeks   -- weeks (defined as 7 days)
-//   m, mo, month, months -- months (defined as 365.25/12=30.4375 days)
-//   y, yr, year, years   -- years (defined as 365.25 days)
+//	s, sec, secs         -- seconds
+//	h, hr, hour, hours   -- hours
+//	d, day, days         -- days (defined as 24 hours)
+//	w, wk, week, weeks   -- weeks (defined as 7 days)
+//	m, mo, month, months -- months (defined as 365.25/12=30.4375 days)
+//	y, yr, year, years   -- years (defined as 365.25 days)
 //
 // The space between the number and the unit is optional. Fractional values are
 // permitted, and results are rounded toward zero.
