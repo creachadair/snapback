@@ -25,7 +25,7 @@ import (
 	"time"
 
 	"bitbucket.org/creachadair/shell"
-	"bitbucket.org/creachadair/stringset"
+	"github.com/creachadair/mds/mapset"
 	"github.com/creachadair/snapback/config"
 	"github.com/creachadair/tarsnap"
 )
@@ -134,12 +134,12 @@ func main() {
 	// Pre-check non-flag arguments to prune, to avoid a lookup in case the user
 	// specified unknown backup sets.
 	if *doPrune {
-		s := stringset.New(flag.Args()...)
-		v := stringset.FromIndexed(len(cfg.Backup), func(i int) string {
-			return cfg.Backup[i].Name
+		s := mapset.New(flag.Args()...)
+		v := mapset.FromSlice(cfg.Backup, func(b *config.Backup) string {
+			return b.Name
 		})
 		if !s.IsSubset(v) {
-			log.Fatalf("Unknown backup set names for -prune: %s", s.Diff(v))
+			log.Fatalf("Unknown backup set names for -prune: %s", s.RemoveAll(v).Slice())
 		}
 	}
 
@@ -300,18 +300,19 @@ func pruneArchives(cfg *config.Config, as []tarsnap.Archive) {
 	chosen := as
 	if flag.NArg() != 0 {
 		chosen = nil
-		s := stringset.New(flag.Args()...)
+		s := mapset.New(flag.Args()...)
 		for _, a := range as {
-			if s.Contains(a.Base) {
+			if s.Has(a.Base) {
 				chosen = append(chosen, a)
 			}
 		}
 	}
 
 	expired := cfg.FindExpired(chosen, now)
-	prune := stringset.FromIndexed(len(expired), func(i int) string {
-		return expired[i].Name
-	}).Elements()
+	prune := mapset.FromSlice(expired, func(a tarsnap.Archive) string {
+		return a.Name
+	}).Slice()
+	sort.Strings(prune)
 
 	if len(prune) == 0 {
 		fmt.Fprintln(os.Stderr, "Nothing to prune")
@@ -352,7 +353,7 @@ func restoreFiles(cfg *config.Config, dir string) {
 	// Locate the backup set for each requested path.  For now this must be
 	// unique or it's an error.
 	need := make(map[string][]string) // :: base → paths
-	slow := make(map[string]bool)     // :: base → slow read necessary
+	slow := mapset.New[string]()
 	for _, path := range flag.Args() {
 		abs, err := filepath.Abs(path)
 		if err != nil {
@@ -370,7 +371,7 @@ func restoreFiles(cfg *config.Config, dir string) {
 		// archive.  But we can only do this if the user did not request the
 		// restoration of directories or globs.
 		if strings.HasSuffix(path, "/") || isGlob(path) {
-			slow[n] = true
+			slow.Add(n)
 		}
 		need[n] = append(need[n], strings.TrimPrefix(bs[0].Relative, "/"))
 
@@ -392,10 +393,10 @@ func restoreFiles(cfg *config.Config, dir string) {
 
 	for set, paths := range need {
 		opts := tarsnap.ExtractOptions{
-			Include:            stringset.New(paths...).Elements(),
+			Include:            sortedUnique(paths),
 			WorkDir:            dir,
 			RestorePermissions: true,
-			FastRead:           !slow[set],
+			FastRead:           !slow.Has(set),
 		}
 
 		// Find the latest archive and run the extraction.
@@ -504,9 +505,9 @@ func chooseBackups(cfg *config.Config, names []string) ([]*config.Backup, error)
 		}
 		return sets, nil
 	}
-	seen := stringset.New()
+	seen := mapset.New[string]()
 	for _, name := range names {
-		if seen.Contains(name) {
+		if seen.Has(name) {
 			return nil, fmt.Errorf("duplicate backup set %q", name)
 		}
 
@@ -638,4 +639,10 @@ func hasGlob(args []string) bool {
 		}
 	}
 	return false
+}
+
+func sortedUnique(ss []string) []string {
+	out := mapset.New(ss...).Slice()
+	sort.Strings(out)
+	return out
 }
