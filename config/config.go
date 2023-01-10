@@ -14,6 +14,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/creachadair/mds/mapset"
 	"github.com/creachadair/tarsnap"
 	yaml "gopkg.in/yaml.v3"
 )
@@ -354,16 +355,16 @@ func Parse(r io.Reader) (*Config, error) {
 	expand(&cfg.ListCache)
 	expand(&cfg.AutoPrune.Timestamp)
 
-	seen := make(map[string]bool)
+	seen := mapset.New[string]()
 	for _, b := range cfg.Backup {
 		if b.Name == "" {
 			return nil, errors.New("empty backup name")
-		} else if seen[b.Name] {
+		} else if seen.Has(b.Name) {
 			return nil, fmt.Errorf("repeated backup name %q", b.Name)
 		} else if !cfg.checkPolicy(b) {
 			return nil, fmt.Errorf("undefined policy %q for backup %q", b.Policy, b.Name)
 		}
-		seen[b.Name] = true
+		seen.Add(b.Name)
 		sortExp(b.Expiration)
 		expand(&b.WorkDir)
 		// N.B. Glob expansion is deferred until we know whether we are creating
