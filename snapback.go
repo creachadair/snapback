@@ -135,9 +135,10 @@ func main() {
 	// specified unknown backup sets.
 	if *doPrune {
 		s := mapset.New(flag.Args()...)
-		v := mapset.FromSlice(cfg.Backup, func(b *config.Backup) string {
-			return b.Name
-		})
+		v := mapset.New[string]()
+		for _, b := range cfg.Backup {
+			v.Add(b.Name)
+		}
 		if !s.IsSubset(v) {
 			log.Fatalf("Unknown backup set names for -prune: %s", s.RemoveAll(v).Slice())
 		}
@@ -309,9 +310,11 @@ func pruneArchives(cfg *config.Config, as []tarsnap.Archive) {
 	}
 
 	expired := cfg.FindExpired(chosen, now)
-	prune := mapset.FromSlice(expired, func(a tarsnap.Archive) string {
-		return a.Name
-	}).Slice()
+	exp := mapset.New[string]()
+	for _, e := range expired {
+		exp.Add(e.Name)
+	}
+	prune := exp.Slice()
 	sort.Strings(prune)
 
 	if len(prune) == 0 {
