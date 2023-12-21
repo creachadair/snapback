@@ -1,9 +1,9 @@
 module github.com/creachadair/snapback
 
 require (
-	bitbucket.org/creachadair/shell v0.0.7
+	bitbucket.org/creachadair/shell v0.0.8
 	github.com/creachadair/atomicfile v0.3.2
-	github.com/creachadair/mds v0.3.3
+	github.com/creachadair/mds v0.5.1
 	github.com/creachadair/tarsnap v0.4.3
 	github.com/google/go-cmp v0.6.0
 	gopkg.in/yaml.v3 v3.0.1
