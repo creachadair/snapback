@@ -15,6 +15,6 @@ require (
 	gopkg.in/check.v1 v1.0.0-20200227125254-8fa46927fb4f // indirect
 )
 
-go 1.21
+go 1.22
 
 toolchain go1.21.0
