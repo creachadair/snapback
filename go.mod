@@ -1,7 +1,6 @@
 module github.com/creachadair/snapback
 
 require (
-	bitbucket.org/creachadair/shell v0.0.8
 	github.com/creachadair/atomicfile v0.3.5
 	github.com/creachadair/mds v0.17.1
 	github.com/creachadair/tarsnap v0.4.3

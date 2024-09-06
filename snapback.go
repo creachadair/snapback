@@ -24,8 +24,8 @@ import (
 	"text/tabwriter"
 	"time"
 
-	"bitbucket.org/creachadair/shell"
 	"github.com/creachadair/mds/mapset"
+	"github.com/creachadair/mds/shell"
 	"github.com/creachadair/snapback/config"
 	"github.com/creachadair/tarsnap"
 )
