@@ -2,6 +2,8 @@ github.com/creachadair/atomicfile v0.3.8 h1:PyMIBZHZunTF+2+OSJCUg4XWO9nh6NwIacUB
 github.com/creachadair/atomicfile v0.3.8/go.mod h1:oZrfNyYdwMjCD+eKNqsnPmdnQ54z4ujOoYvNTZyuJ2A=
 github.com/creachadair/mds v0.25.2 h1:xc0S0AfDq5GX9KUR5sLvi5XjA61/P6S5e0xFs1vA18Q=
 github.com/creachadair/mds v0.25.2/go.mod h1:+s4CFteFRj4eq2KcGHW8Wei3u9NyzSPzNV32EvjyK/Q=
+github.com/creachadair/mds v0.25.3 h1:eE9+aMAV+CooBl5XZKcUuDgQxm7+/f2Of+JT1cX6plM=
+github.com/creachadair/mds v0.25.3/go.mod h1:4hatI3hRM+qhzuAmqPRFvaBM8mONkS7nsLxkcuTYUIs=
 github.com/creachadair/tarsnap v0.4.3 h1:ZD2qunKJV3/a9TNf54yjKVL5nZA1r8bkhdjl1x0zhz4=
 github.com/creachadair/tarsnap v0.4.3/go.mod h1:HzTqTPrLj2Ys759+cedBWCE/O4p31DpwS97QLWM6rjQ=
 github.com/creack/pty v1.1.9/go.mod h1:oKZEueFk5CKHvIhNR5MUki03XCEU+Q6VDXinZuGJ33E=
