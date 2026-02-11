@@ -80,7 +80,7 @@ func containsPath(b *Backup, wd, path string) (string, bool) {
 			return path, false
 		}
 		needle = rel
-	} else if t := strings.TrimPrefix(path, base+"/"); t != path {
+	} else if t, ok := strings.CutPrefix(path, base+"/"); ok {
 		needle = t
 	}
 

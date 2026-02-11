@@ -18,6 +18,7 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
+	"slices"
 	"sort"
 	"strconv"
 	"strings"
@@ -636,12 +637,7 @@ func isGlob(s string) bool {
 }
 
 func hasGlob(args []string) bool {
-	for _, arg := range args {
-		if isGlob(arg) {
-			return true
-		}
-	}
-	return false
+	return slices.ContainsFunc(args, isGlob)
 }
 
 func sortedUnique(ss []string) []string {

@@ -331,7 +331,7 @@ func (b *Backup) ExpandIncludes(wd string) {
 		path := vpath(inc)
 		matches, _ := filepath.Glob(path)
 		for _, match := range matches {
-			if t := strings.TrimPrefix(match, base+"/"); t != match {
+			if t, ok := strings.CutPrefix(match, base+"/"); ok {
 				match = t
 			}
 			paths = append(paths, match)
