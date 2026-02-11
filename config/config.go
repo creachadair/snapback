@@ -271,7 +271,7 @@ func (c *Config) ensurePruneSentinel() (time.Time, error) {
 	return fi.ModTime(), err
 }
 
-func (c *Config) logf(msg string, args ...interface{}) {
+func (c *Config) logf(msg string, args ...any) {
 	if c.Verbose {
 		log.Printf(msg, args...)
 	}

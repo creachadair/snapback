@@ -26,7 +26,7 @@ type Interval int64
 
 // UnmarshalYAML decodes an interval from a string in the format accepted by
 // parseInterval.
-func (iv *Interval) UnmarshalYAML(unmarshal func(interface{}) error) error {
+func (iv *Interval) UnmarshalYAML(unmarshal func(any) error) error {
 	var s string
 	if err := unmarshal(&s); err != nil {
 		return err
@@ -131,7 +131,7 @@ func (s *Sampling) parseFrom(raw string) error {
 // UnmarshalYAML decodes a sampling from a string of the form "n/iv".
 // As special cases, "none" is allowed as an alias for 0/iv and "all" as an
 // alias for 1/0.
-func (s *Sampling) UnmarshalYAML(unmarshal func(interface{}) error) error {
+func (s *Sampling) UnmarshalYAML(unmarshal func(any) error) error {
 	var raw string
 	if err := unmarshal(&raw); err != nil {
 		return err
