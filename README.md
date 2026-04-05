@@ -10,23 +10,17 @@
 
 To use `snapback`, you will need [tarsnap][tsdl] and [Go][godl].  Once you have these installed, run:
 
-```shell
-$ (cd "${TMPDIR:-/tmp}"; GOPROXY=direct go install github.com/creachadair/snapback@latest)
+```console
+$ go install github.com/creachadair/snapback@latest
 ```
 
 Provided you have `$GOPATH/bin` in your `$PATH` environment, you should be able to verify that things are working by running:
 
-```shell
+```console
 $ snapback -help
 ```
 
-To update the version you have installed to the latest from GitHub, run `snapback -update`, or manually invoke
-
-```shell
-$ (cd "${TMPDIR:-/tmp}"; GOPROXY=direct go install github.com/creachadair/snapback@latest)
-```
-
-which is what the `-update` flag does.
+To update the version you have installed to the latest from GitHub, run `snapback -update`, or manually install `@latest` again as noted above.
 
 ## Quick Reference
 
